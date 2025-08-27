@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 
 const TruthTableGenerator = () => {
   const [variables, setVariables] = useState(['A', 'B']);
-  const [statements, setStatements] = useState(['A AND B', 'A IMPLIES B', 'A IFF B']);
+  const [statements, setStatements] = useState(['A /\\ B', 'A --> B', 'A <-> B']);
   const [truthTable, setTruthTable] = useState([]);
   const [error, setError] = useState('');
 
@@ -39,6 +39,34 @@ const TruthTableGenerator = () => {
     setStatements(newStatements);
   };
 
+  // Function to convert logical expressions to symbols
+  const convertToSymbols = (expression) => {
+    let result = expression;
+    
+    // Replace operators with symbols in order of specificity (longest first)
+    const replacements = [
+      { text: /IF AND ONLY IF/gi, symbol: '↔' },
+      { text: /<->/g, symbol: '↔' },
+      { text: /IFF/gi, symbol: '↔' },
+      { text: /-->/g, symbol: '→' },
+      { text: /IMPLIES/gi, symbol: '→' },
+      { text: /\/\\/g, symbol: '∧' },
+      { text: /AND/gi, symbol: '∧' },
+      { text: /\\\//g, symbol: '∨' },
+      { text: /OR/gi, symbol: '∨' },
+      { text: /XOR/gi, symbol: '⊕' },
+      { text: /NOT/gi, symbol: '¬' },
+      { text: /TRUE/gi, symbol: 'T' },
+      { text: /FALSE/gi, symbol: 'F' }
+    ];
+    
+    replacements.forEach(({ text, symbol }) => {
+      result = result.replace(text, symbol);
+    });
+    
+    return result;
+  };
+
   const evaluateExpression = (expression, values) => {
     try {
       // Tokenizer
@@ -56,6 +84,18 @@ const TruthTableGenerator = () => {
           if (expr[i] === '(' || expr[i] === ')') {
             tokens.push(expr[i]);
             i++;
+          } else if (expr.substr(i, 3) === '<->') {
+            tokens.push('IFF');
+            i += 3;
+          } else if (expr.substr(i, 3) === '-->') {
+            tokens.push('IMPLIES');
+            i += 3;
+          } else if (expr.substr(i, 2) === '/\\') {
+            tokens.push('AND');
+            i += 2;
+          } else if (expr.substr(i, 2) === '\\/') {
+            tokens.push('OR');
+            i += 2;
           } else if (/[A-Z]/.test(expr[i])) {
             // Check for multi-character operators or variables
             let token = '';
@@ -253,7 +293,8 @@ const TruthTableGenerator = () => {
     }
     
     if (statements.some(s => !s.trim())) {
-      setError('All statements must have expressions');
+      // Don't show error for empty statements, just return empty table
+      setTruthTable([]);
       return;
     }
     
@@ -267,15 +308,17 @@ const TruthTableGenerator = () => {
         results: []
       };
       
-      // Generate binary values for variables
+      // Generate binary values for variables (start with all T instead of all F)
       for (let j = variables.length - 1; j >= 0; j--) {
-        row.values.push(!!(i & (1 << j)));
+        row.values.push(!(i & (1 << j)));
       }
       
       // Evaluate each statement
       statements.forEach(statement => {
-        const result = evaluateExpression(statement, row.values);
-        row.results.push(result);
+        if (statement.trim()) {
+          const result = evaluateExpression(statement, row.values);
+          row.results.push(result);
+        }
       });
       
       table.push(row);
@@ -283,6 +326,11 @@ const TruthTableGenerator = () => {
     
     setTruthTable(table);
   }, [variables, statements]);
+
+  // Auto-generate truth table when variables or statements change
+  React.useEffect(() => {
+    generateTruthTable();
+  }, [generateTruthTable]);
 
   const styles = {
     container: {
@@ -435,7 +483,9 @@ const TruthTableGenerator = () => {
       fontWeight: '600'
     },
     tableHeaderResult: {
-      backgroundColor: '#fef3c7'
+      backgroundColor: '#fef3c7',
+      fontSize: '16px',
+      fontFamily: 'serif'
     },
     tableCell: {
       border: '1px solid #d1d5db',
@@ -562,12 +612,12 @@ const TruthTableGenerator = () => {
           <div style={styles.helpBox}>
             <div style={styles.helpTitle}>Supported operators:</div>
             <div style={styles.helpGrid}>
-              <div><code style={styles.code}>AND</code> - Logical AND (∧)</div>
-              <div><code style={styles.code}>OR</code> - Logical OR (∨)</div>
+              <div><code style={styles.code}>/\ or AND</code> - Logical AND (∧)</div>
+              <div><code style={styles.code}>\/ or OR</code> - Logical OR (∨)</div>
               <div><code style={styles.code}>NOT</code> - Logical NOT (¬)</div>
               <div><code style={styles.code}>XOR</code> - Exclusive OR (⊕)</div>
-              <div><code style={styles.code}>IMPLIES</code> - Implication (→)</div>
-              <div><code style={styles.code}>IFF</code> - If and only if (↔)</div>
+              <div><code style={styles.code}>--> or IMPLIES</code> - Implication (→)</div>
+              <div><code style={styles.code}>&lt;-&gt; or IFF</code> - If and only if (↔)</div>
             </div>
             <div style={{marginTop: '8px'}}>
               <div style={styles.helpTitle}>Constants & Features:</div>
@@ -577,16 +627,9 @@ const TruthTableGenerator = () => {
               </div>
             </div>
             <div style={{marginTop: '8px', fontSize: '12px'}}>
-              Examples: "A AND B", "A IMPLIES (B OR F)", "(A IFF T) AND NOT B", "NOT(A XOR B)"
+              Examples: "A /\ B", "A --> (B \/ F)", "(A &lt;-&gt; T) /\ NOT B", "NOT(A XOR B)"
             </div>
           </div>
-          
-          <button
-            onClick={generateTruthTable}
-            style={{...styles.button, ...styles.buttonPurple}}
-          >
-            ▶ Generate Truth Table
-          </button>
         </div>
         
         {/* Truth Table Section */}
@@ -603,11 +646,16 @@ const TruthTableGenerator = () => {
                           {variable}
                         </th>
                       ))}
-                      {statements.map((statement, index) => (
-                        <th key={`stmt-${index}`} style={{...styles.tableCell, ...styles.tableHeaderResult}}>
-                          {statement.length > 15 ? `${statement.slice(0, 15)}...` : statement}
-                        </th>
-                      ))}
+                      {statements.map((statement, index) => {
+                        if (!statement.trim()) return null; // Don't show column for empty statements
+                        const symbolized = convertToSymbols(statement);
+                        const truncated = symbolized.length > 20 ? `${symbolized.slice(0, 20)}...` : symbolized;
+                        return (
+                          <th key={`stmt-${index}`} style={{...styles.tableCell, ...styles.tableHeaderResult}} title={symbolized}>
+                            {truncated}
+                          </th>
+                        );
+                      }).filter(Boolean)}
                     </tr>
                   </thead>
                   <tbody>
@@ -623,17 +671,23 @@ const TruthTableGenerator = () => {
                             </span>
                           </td>
                         ))}
-                        {row.results.map((result, index) => (
-                          <td key={`res-${index}`} style={{...styles.tableCell, ...styles.resultCell}}>
-                            <span style={{
-                              ...styles.truthValue,
-                              ...(result === 'Error' ? styles.truthError : 
-                                  result ? styles.truthTrue : styles.truthFalse)
-                            }}>
-                              {result === 'Error' ? 'ERR' : result ? 'T' : 'F'}
-                            </span>
-                          </td>
-                        ))}
+                        {row.results.map((result, index) => {
+                          // Only show results for non-empty statements
+                          const statement = statements[index];
+                          if (!statement || !statement.trim()) return null;
+                          
+                          return (
+                            <td key={`res-${index}`} style={{...styles.tableCell, ...styles.resultCell}}>
+                              <span style={{
+                                ...styles.truthValue,
+                                ...(result === 'Error' ? styles.truthError : 
+                                    result ? styles.truthTrue : styles.truthFalse)
+                              }}>
+                                {result === 'Error' ? 'ERR' : result ? 'T' : 'F'}
+                              </span>
+                            </td>
+                          );
+                        }).filter(Boolean)}
                       </tr>
                     ))}
                   </tbody>
