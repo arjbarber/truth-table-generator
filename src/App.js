@@ -55,6 +55,7 @@ const TruthTableGenerator = () => {
       { text: /\\\//g, symbol: '∨' },
       { text: /OR/gi, symbol: '∨' },
       { text: /XOR/gi, symbol: '⊕' },
+      { text: /\^/g, symbol: '⊕' },
       { text: /NOT/gi, symbol: '¬' },
       { text: /TRUE/gi, symbol: 'T' },
       { text: /FALSE/gi, symbol: 'F' }
@@ -69,11 +70,11 @@ const TruthTableGenerator = () => {
 
   const evaluateExpression = (expression, values) => {
     try {
-      // Tokenizer
+      // Improved tokenizer that handles multi-character operators properly
       const tokenize = (expr) => {
         const tokens = [];
         let i = 0;
-        expr = expr.replace(/\s+/g, ' ').trim();
+        expr = expr.replace(/\s+/g, ' ').trim().toUpperCase();
         
         while (i < expr.length) {
           if (expr[i] === ' ') {
@@ -81,42 +82,110 @@ const TruthTableGenerator = () => {
             continue;
           }
           
+          // Single character tokens
           if (expr[i] === '(' || expr[i] === ')') {
             tokens.push(expr[i]);
             i++;
-          } else if (expr.substr(i, 3) === '<->') {
+            continue;
+          }
+          
+          // Multi-character operators - check in order of length (longest first)
+          if (expr.substr(i, 13) === 'IF AND ONLY IF') {
+            tokens.push('IFF');
+            i += 13;
+            continue;
+          }
+          
+          if (expr.substr(i, 7) === 'IMPLIES') {
+            tokens.push('IMPLIES');
+            i += 7;
+            continue;
+          }
+          
+          if (expr.substr(i, 5) === 'FALSE') {
+            tokens.push('FALSE');
+            i += 5;
+            continue;
+          }
+          
+          if (expr.substr(i, 4) === 'TRUE') {
+            tokens.push('TRUE');
+            i += 4;
+            continue;
+          }
+          
+          if (expr.substr(i, 3) === 'XOR') {
+            tokens.push('XOR');
+            i += 3;
+            continue;
+          }
+          
+          if (expr.substr(i, 3) === 'AND') {
+            tokens.push('AND');
+            i += 3;
+            continue;
+          }
+          
+          if (expr.substr(i, 3) === 'NOT') {
+            tokens.push('NOT');
+            i += 3;
+            continue;
+          }
+          
+          if (expr.substr(i, 3) === 'IFF') {
             tokens.push('IFF');
             i += 3;
-          } else if (expr.substr(i, 3) === '-->') {
+            continue;
+          }
+          
+          if (expr.substr(i, 3) === '<->') {
+            tokens.push('IFF');
+            i += 3;
+            continue;
+          }
+          
+          if (expr.substr(i, 3) === '-->') {
             tokens.push('IMPLIES');
             i += 3;
-          } else if (expr.substr(i, 2) === '/\\') {
-            tokens.push('AND');
-            i += 2;
-          } else if (expr.substr(i, 2) === '\\/') {
+            continue;
+          }
+          
+          if (expr.substr(i, 2) === 'OR') {
             tokens.push('OR');
             i += 2;
-          } else if (/[A-Z]/.test(expr[i])) {
-            // Check for multi-character operators or variables
-            let token = '';
-            while (i < expr.length && /[A-Z]/.test(expr[i])) {
-              token += expr[i];
-              i++;
-            }
-            
-            // Check if it's a multi-word operator
-            if (token === 'IF' && expr.substr(i).trimStart().startsWith('AND ONLY IF')) {
-              token = 'IFF';
-              i = expr.indexOf('IF', i + 1) + 2; // Skip to after second IF
-            } else if (token === 'TRUE' || token === 'FALSE') {
-              tokens.push(token);
-            } else {
-              tokens.push(token);
-            }
-          } else {
-            i++;
+            continue;
           }
+          
+          if (expr.substr(i, 2) === '/\\') {
+            tokens.push('AND');
+            i += 2;
+            continue;
+          }
+          
+          if (expr.substr(i, 2) === '\\/') {
+            tokens.push('OR');
+            i += 2;
+            continue;
+          }
+          
+          // Single character operators
+          if (expr[i] === '^') {
+            tokens.push('XOR');
+            i++;
+            continue;
+          }
+          
+          // Single letter variables
+          if (/[A-Z]/.test(expr[i])) {
+            tokens.push(expr[i]);
+            i++;
+            continue;
+          }
+          
+          // Skip unknown characters
+          i++;
         }
+        
         return tokens;
       };
 
@@ -274,7 +343,7 @@ const TruthTableGenerator = () => {
       };
       
       // Main evaluation
-      const tokens = tokenize(expression.toUpperCase());
+      const tokens = tokenize(expression);
       const ast = parse(tokens);
       return evaluate(ast, values);
       
@@ -615,7 +684,7 @@ const TruthTableGenerator = () => {
               <div><code style={styles.code}>/\ or AND</code> - Logical AND (∧)</div>
               <div><code style={styles.code}>\/ or OR</code> - Logical OR (∨)</div>
               <div><code style={styles.code}>NOT</code> - Logical NOT (¬)</div>
-              <div><code style={styles.code}>XOR</code> - Exclusive OR (⊕)</div>
+              <div><code style={styles.code}>XOR or ^</code> - Exclusive OR (⊕)</div>
               <div><code style={styles.code}>--> or IMPLIES</code> - Implication (→)</div>
               <div><code style={styles.code}>&lt;-&gt; or IFF</code> - If and only if (↔)</div>
             </div>
@@ -627,7 +696,7 @@ const TruthTableGenerator = () => {
               </div>
             </div>
             <div style={{marginTop: '8px', fontSize: '12px'}}>
-              Examples: "A /\ B", "A --> (B \/ F)", "(A &lt;-&gt; T) /\ NOT B", "NOT(A XOR B)"
+              Examples: "A /\ B", "A --> (B \/ F)", "(A &lt;-&gt; T) /\ NOT B", "A ^ B", "NOT(A XOR B)"
             </div>
           </div>
         </div>
