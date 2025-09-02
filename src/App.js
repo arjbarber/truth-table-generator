@@ -52,10 +52,12 @@ const TruthTableGenerator = () => {
       
       // Conjunction (AND)
       { pattern: /\band\b/gi, symbol: ' ∧ ' },
+      { pattern: /&/g, symbol: ' ∧ ' },
       { pattern: /\/\\/g, symbol: ' ∧ ' },
       
       // Disjunction (OR)
       { pattern: /\bor\b/gi, symbol: ' ∨ ' },
+      { pattern: /\|/g, symbol: ' ∨ ' },
       { pattern: /\\\//g, symbol: ' ∨ ' },
       
       // Exclusive OR
@@ -115,8 +117,10 @@ const TruthTableGenerator = () => {
       { text: /IMPLIES/gi, symbol: '→' },
       { text: /\/\\/g, symbol: '∧' },
       { text: /AND/gi, symbol: '∧' },
+      { text: /&/gi, symbol: '∧' },
       { text: /\\\//g, symbol: '∨' },
       { text: /OR/gi, symbol: '∨' },
+      { text: /\|/gi, symbol: '∨' },
       { text: /XOR/gi, symbol: '⊕' },
       { text: /\^/g, symbol: '⊕' },
       { text: /NOT/gi, symbol: '¬' },
@@ -244,6 +248,18 @@ const TruthTableGenerator = () => {
           // Single character operators
           if (upperExpr[i] === '^') {
             tokens.push('XOR');
+            i++;
+            continue;
+          }
+          
+          if (upperExpr[i] === '&') {
+            tokens.push('AND');
+            i++;
+            continue;
+          }
+
+          if (upperExpr[i] === '|') {
+            tokens.push('OR');
             i++;
             continue;
           }
@@ -783,8 +799,8 @@ const TruthTableGenerator = () => {
           <div style={styles.helpBox}>
             <div style={styles.helpTitle}>Auto-correction shortcuts:</div>
             <div style={styles.helpGrid}>
-              <div><code style={styles.code}>/\, and</code> → AND (∧)</div>
-              <div><code style={styles.code}>\/, or</code> → OR (∨)</div>
+              <div><code style={styles.code}>/\, and, &</code> → AND (∧)</div>
+              <div><code style={styles.code}>\/, or, |</code> → OR (∨)</div>
               <div><code style={styles.code}>not, !, ~</code> → NOT(¬)</div>
               <div><code style={styles.code}>^, xor</code> → XOR (⊕)</div>
               <div><code style={styles.code}>-->, implies</code> → IMPLIES (→)</div>
@@ -793,7 +809,7 @@ const TruthTableGenerator = () => {
             <div style={{marginTop: '8px'}}>
               <div style={styles.helpTitle}>Variables and Constants:</div>
               <div style={{fontSize: '12px'}}>
-                <div><code style={styles.code}>A, B, p, q, x, y</code> → Variables (case-insensitive)</div>
+                <div><code style={styles.code}>A, B, p, q</code> → Variables (case-insensitive)</div>
                 <div><code style={styles.code}>true, false</code> → T, F</div>
                 <div><code style={styles.code}>( )</code> - Parentheses for grouping</div>
               </div>
