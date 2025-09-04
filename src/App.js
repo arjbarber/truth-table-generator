@@ -1,13 +1,13 @@
 import React, { useState, useCallback } from 'react';
 
 const TruthTableGenerator = () => {
-  const [variables, setVariables] = useState(['A', 'B']);
-  const [statements, setStatements] = useState(['A /\\ B', 'A --> B', 'A <-> B']);
+  const [variables, setVariables] = useState(['a', 'b']);
+  const [statements, setStatements] = useState(['a ∧ b', 'a → b', 'a ↔ b']);
   const [truthTable, setTruthTable] = useState([]);
   const [error, setError] = useState('');
 
   const addVariable = () => {
-    const nextLetter = String.fromCharCode(65 + variables.length);
+    const nextLetter = String.fromCharCode(97 + variables.length);
     if (variables.length < 8) {
       setVariables([...variables, nextLetter]);
     }
@@ -21,7 +21,8 @@ const TruthTableGenerator = () => {
 
   const updateVariable = (index, value) => {
     const newVars = [...variables];
-    newVars[index] = value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 1);
+    // Allow both uppercase and lowercase letters
+    newVars[index] = value.replace(/[^A-Za-z]/g, '').slice(0, 1);
     setVariables(newVars);
   };
 
@@ -33,13 +34,77 @@ const TruthTableGenerator = () => {
     setStatements(statements.filter((_, i) => i !== index));
   };
 
+  // Enhanced auto-correction function
+  const autoCorrectLogicalExpression = (input) => {
+    let corrected = input;
+    
+    // Define replacements in order of specificity (longest patterns first)
+    const replacements = [
+      // Biconditional (if and only if)
+      { pattern: /\bif\s+and\s+only\s+if\b/gi, symbol: ' ↔ ' },
+      { pattern: /\biff\b/gi, symbol: ' ↔ ' },
+      { pattern: /<->/g, symbol: ' ↔ ' },
+      
+      // Implication
+      { pattern: /\bimplies\b/gi, symbol: ' → ' },
+      { pattern: /\bif\s+then\b/gi, symbol: ' → ' },
+      { pattern: /-->/g, symbol: ' → ' },
+      
+      // Conjunction (AND)
+      { pattern: /\band\b/gi, symbol: ' ∧ ' },
+      { pattern: /&/g, symbol: ' ∧ ' },
+      { pattern: /\/\\/g, symbol: ' ∧ ' },
+      
+      // Disjunction (OR)
+      { pattern: /\bor\b/gi, symbol: ' ∨ ' },
+      { pattern: /\|/g, symbol: ' ∨ ' },
+      { pattern: /\\\//g, symbol: ' ∨ ' },
+      
+      // Exclusive OR
+      { pattern: /\bxor\b/gi, symbol: ' ⊕ ' },
+      { pattern: /\^/g, symbol: ' ⊕ ' },
+      
+      // Negation
+      { pattern: /\bnot\b/gi, symbol: '¬' },
+      { pattern: /~/g, symbol: '¬' },
+      { pattern: /!/g, symbol: '¬' },
+      
+      // Constants
+      { pattern: /\btrue\b/gi, symbol: 'T' },
+      { pattern: /\t\b/gi, symbol: 'T' },
+      { pattern: /\bfalse\b/gi, symbol: 'F' },
+      { pattern: /\f\b/gi, symbol: 'F' },
+    ];
+    
+    // Apply replacements
+    replacements.forEach(({ pattern, symbol }) => {
+      corrected = corrected.replace(pattern, symbol);
+    });
+    
+    // Clean up extra spaces around operators but preserve user spaces
+    corrected = corrected.replace(/\s*(¬)\s*/g, '$1 ');
+    corrected = corrected.replace(/\s*(∧|∨|→|↔|⊕)\s*/g, ' $1 ');
+    corrected = corrected.replace(/\s{2,}/g, ' '); // Only replace multiple spaces with single space
+    
+    return corrected;
+  };
+
   const updateStatement = (index, value) => {
     const newStatements = [...statements];
-    newStatements[index] = value;
+    const currentStatement = statements[index];
+    
+    // Only apply auto-correction if the text is getting longer (user is typing, not deleting)
+    if (value.length > currentStatement.length) {
+      newStatements[index] = autoCorrectLogicalExpression(value);
+    } else {
+      // User is deleting, don't auto-correct
+      newStatements[index] = value;
+    }
+    
     setStatements(newStatements);
   };
 
-  // Function to convert logical expressions to symbols
+  // Function to convert logical expressions to symbols (kept for backward compatibility)
   const convertToSymbols = (expression) => {
     let result = expression;
     
@@ -52,8 +117,10 @@ const TruthTableGenerator = () => {
       { text: /IMPLIES/gi, symbol: '→' },
       { text: /\/\\/g, symbol: '∧' },
       { text: /AND/gi, symbol: '∧' },
+      { text: /&/gi, symbol: '∧' },
       { text: /\\\//g, symbol: '∨' },
       { text: /OR/gi, symbol: '∨' },
+      { text: /\|/gi, symbol: '∨' },
       { text: /XOR/gi, symbol: '⊕' },
       { text: /\^/g, symbol: '⊕' },
       { text: /NOT/gi, symbol: '¬' },
@@ -70,113 +137,136 @@ const TruthTableGenerator = () => {
 
   const evaluateExpression = (expression, values) => {
     try {
-      // Improved tokenizer that handles multi-character operators properly
       const tokenize = (expr) => {
         const tokens = [];
         let i = 0;
-        expr = expr.replace(/\s+/g, ' ').trim().toUpperCase();
+        expr = expr.replace(/\s+/g, ' ').trim();
         
-        while (i < expr.length) {
-          if (expr[i] === ' ') {
+        // Handle Unicode symbols and convert them to text for parsing
+        expr = expr.replace(/¬/g, 'NOT ');
+        expr = expr.replace(/∧/g, ' AND ');
+        expr = expr.replace(/∨/g, ' OR ');
+        expr = expr.replace(/→/g, ' IMPLIES ');
+        expr = expr.replace(/↔/g, ' IFF ');
+        expr = expr.replace(/⊕/g, ' XOR ');
+        
+        // Convert to uppercase for parsing but preserve original case for variable lookup
+        const upperExpr = expr.toUpperCase();
+        
+        while (i < upperExpr.length) {
+          if (upperExpr[i] === ' ') {
             i++;
             continue;
           }
           
           // Single character tokens
-          if (expr[i] === '(' || expr[i] === ')') {
-            tokens.push(expr[i]);
+          if (upperExpr[i] === '(' || upperExpr[i] === ')') {
+            tokens.push(upperExpr[i]);
             i++;
             continue;
           }
           
           // Multi-character operators - check in order of length (longest first)
-          if (expr.substr(i, 13) === 'IF AND ONLY IF') {
+          if (upperExpr.substr(i, 13) === 'IF AND ONLY IF') {
             tokens.push('IFF');
             i += 13;
             continue;
           }
           
-          if (expr.substr(i, 7) === 'IMPLIES') {
+          if (upperExpr.substr(i, 7) === 'IMPLIES') {
             tokens.push('IMPLIES');
             i += 7;
             continue;
           }
           
-          if (expr.substr(i, 5) === 'FALSE') {
+          if (upperExpr.substr(i, 5) === 'FALSE') {
             tokens.push('FALSE');
             i += 5;
             continue;
           }
           
-          if (expr.substr(i, 4) === 'TRUE') {
+          if (upperExpr.substr(i, 4) === 'TRUE') {
             tokens.push('TRUE');
             i += 4;
             continue;
           }
           
-          if (expr.substr(i, 3) === 'XOR') {
+          if (upperExpr.substr(i, 3) === 'XOR') {
             tokens.push('XOR');
             i += 3;
             continue;
           }
           
-          if (expr.substr(i, 3) === 'AND') {
+          if (upperExpr.substr(i, 3) === 'AND') {
             tokens.push('AND');
             i += 3;
             continue;
           }
           
-          if (expr.substr(i, 3) === 'NOT') {
+          if (upperExpr.substr(i, 3) === 'NOT') {
             tokens.push('NOT');
             i += 3;
             continue;
           }
           
-          if (expr.substr(i, 3) === 'IFF') {
+          if (upperExpr.substr(i, 3) === 'IFF') {
             tokens.push('IFF');
             i += 3;
             continue;
           }
           
-          if (expr.substr(i, 3) === '<->') {
+          if (upperExpr.substr(i, 3) === '<->') {
             tokens.push('IFF');
             i += 3;
             continue;
           }
           
-          if (expr.substr(i, 3) === '-->') {
+          if (upperExpr.substr(i, 3) === '-->') {
             tokens.push('IMPLIES');
             i += 3;
             continue;
           }
           
-          if (expr.substr(i, 2) === 'OR') {
+          if (upperExpr.substr(i, 2) === 'OR') {
             tokens.push('OR');
             i += 2;
             continue;
           }
           
-          if (expr.substr(i, 2) === '/\\') {
+          if (upperExpr.substr(i, 2) === '/\\') {
             tokens.push('AND');
             i += 2;
             continue;
           }
           
-          if (expr.substr(i, 2) === '\\/') {
+          if (upperExpr.substr(i, 2) === '\\/') {
             tokens.push('OR');
             i += 2;
             continue;
           }
           
           // Single character operators
-          if (expr[i] === '^') {
+          if (upperExpr[i] === '^') {
             tokens.push('XOR');
             i++;
             continue;
           }
           
-          // Single letter variables
-          if (/[A-Z]/.test(expr[i])) {
+          if (upperExpr[i] === '&') {
+            tokens.push('AND');
+            i++;
+            continue;
+          }
+
+          if (upperExpr[i] === '|') {
+            tokens.push('OR');
+            i++;
+            continue;
+          }
+          
+          // Single letter variables (preserve original case)
+          if (/[A-Z]/.test(upperExpr[i])) {
+            // Get the original character from the original expression
             tokens.push(expr[i]);
             i++;
             continue;
@@ -289,8 +379,8 @@ const TruthTableGenerator = () => {
             return { type: 'literal', value: false };
           }
           
-          // Variable
-          if (token && /^[A-Z]$/.test(token)) {
+          // Variable - now supports both uppercase and lowercase
+          if (token && /^[A-Za-z]$/.test(token)) {
             consume();
             return { type: 'variable', name: token };
           }
@@ -308,7 +398,8 @@ const TruthTableGenerator = () => {
         }
         
         if (ast.type === 'variable') {
-          const index = variables.findIndex(v => v === ast.name);
+          // Case-insensitive variable lookup
+          const index = variables.findIndex(v => v.toLowerCase() === ast.name.toLowerCase());
           if (index === -1) throw new Error(`Unknown variable: ${ast.name}`);
           return varValues[index];
         }
@@ -464,7 +555,8 @@ const TruthTableGenerator = () => {
       border: '1px solid #d1d5db',
       borderRadius: '6px',
       fontSize: '14px',
-      outline: 'none'
+      outline: 'none',
+      fontFamily: 'monospace'
     },
     button: {
       display: 'flex',
@@ -589,6 +681,15 @@ const TruthTableGenerator = () => {
       display: 'grid',
       gridTemplateColumns: '1fr 1fr',
       gap: '16px'
+    },
+    autoCorrectNotice: {
+      fontSize: '12px',
+      color: '#059669',
+      backgroundColor: '#d1fae5',
+      padding: '8px',
+      borderRadius: '6px',
+      marginTop: '8px',
+      textAlign: 'center'
     }
   };
 
@@ -615,8 +716,17 @@ const TruthTableGenerator = () => {
                     type="text"
                     value={variable}
                     onChange={(e) => updateVariable(index, e.target.value)}
+                    onKeyDown={
+                      (e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          addVariable();
+                        }
+                      }
+                    }
                     style={styles.variableInput}
                     maxLength="1"
+                    placeholder="a"
                   />
                   <button
                     onClick={() => removeVariable(index)}
@@ -653,7 +763,15 @@ const TruthTableGenerator = () => {
                     type="text"
                     value={statement}
                     onChange={(e) => updateStatement(index, e.target.value)}
-                    placeholder="Enter logical expression..."
+                    onKeyDown={
+                      (e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          addStatement();
+                        }
+                      }
+                    }
+                    placeholder="Type: a and b, A /\ B, p --> q, not A, etc..."
                     style={styles.statementInput}
                   />
                   <button
@@ -679,24 +797,25 @@ const TruthTableGenerator = () => {
           
           {/* Help Section */}
           <div style={styles.helpBox}>
-            <div style={styles.helpTitle}>Supported operators:</div>
+            <div style={styles.helpTitle}>Auto-correction shortcuts:</div>
             <div style={styles.helpGrid}>
-              <div><code style={styles.code}>/\ or AND</code> - Logical AND (∧)</div>
-              <div><code style={styles.code}>\/ or OR</code> - Logical OR (∨)</div>
-              <div><code style={styles.code}>NOT</code> - Logical NOT (¬)</div>
-              <div><code style={styles.code}>XOR or ^</code> - Exclusive OR (⊕)</div>
-              <div><code style={styles.code}>--> or IMPLIES</code> - Implication (→)</div>
-              <div><code style={styles.code}>&lt;-&gt; or IFF</code> - If and only if (↔)</div>
+              <div><code style={styles.code}>/\, and, &</code> → AND (∧)</div>
+              <div><code style={styles.code}>\/, or, |</code> → OR (∨)</div>
+              <div><code style={styles.code}>not, !, ~</code> → NOT(¬)</div>
+              <div><code style={styles.code}>^, xor</code> → XOR (⊕)</div>
+              <div><code style={styles.code}>-->, implies</code> → IMPLIES (→)</div>
+              <div><code style={styles.code}>&lt;-&gt;, iff</code> → IF AND ONLY IF (↔)</div>
             </div>
             <div style={{marginTop: '8px'}}>
-              <div style={styles.helpTitle}>Constants & Features:</div>
+              <div style={styles.helpTitle}>Variables and Constants:</div>
               <div style={{fontSize: '12px'}}>
-                <div><code style={styles.code}>T, TRUE, F, FALSE</code> - Boolean literals</div>
+                <div><code style={styles.code}>A, B, p, q</code> → Variables (case-insensitive)</div>
+                <div><code style={styles.code}>true, false</code> → T, F</div>
                 <div><code style={styles.code}>( )</code> - Parentheses for grouping</div>
               </div>
             </div>
             <div style={{marginTop: '8px', fontSize: '12px'}}>
-              Examples: "A /\ B", "A --> (B \/ F)", "(A &lt;-&gt; T) /\ NOT B", "A ^ B", "NOT(A XOR B)"
+              Try typing: "p and q", "A --> (b or F)", "(x iff T) /\ not Y", "a xor B"
             </div>
           </div>
         </div>
