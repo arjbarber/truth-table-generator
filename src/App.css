@@ -1,3 +1,47 @@
+/* Truth Table App Styles */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+  background-color: white;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.title {
+  font-size: 32px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 32px;
+  color: #1f2937;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+.grid-mobile {
+  display: block;
+}
+
+.error {
+  margin-bottom: 16px;
+  padding: 12px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  border-radius: 6px;
+}
+
+@media (max-width: 1024px) {
+  .grid {
+    display: block;
+  }
+}
+
+/* Original Create React App styles (unused but kept for reference) */
 .App {
   text-align: center;
 }

@@ -1,5 +1,6 @@
 import React from 'react';
 import { autoCorrectLogicalExpression } from '../utils/autoCorrect';
+import '../styles/StatementsSection.css';
 
 const StatementsSection = ({ statements, setStatements }) => {
   const addStatement = () => {
@@ -25,67 +26,13 @@ const StatementsSection = ({ statements, setStatements }) => {
     setStatements(newStatements);
   };
 
-  const styles = {
-    section: {
-      backgroundColor: '#dcfce7',
-      padding: '24px',
-      borderRadius: '8px',
-      marginBottom: '24px'
-    },
-    title: {
-      fontSize: '20px',
-      fontWeight: '600',
-      marginBottom: '16px',
-      color: '#374151'
-    },
-    inputRow: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-      marginBottom: '12px'
-    },
-    input: {
-      flex: 1,
-      padding: '8px 12px',
-      border: '1px solid #d1d5db',
-      borderRadius: '6px',
-      fontSize: '14px',
-      outline: 'none',
-      fontFamily: 'monospace'
-    },
-    button: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-      padding: '8px 16px',
-      backgroundColor: '#059669',
-      color: 'white',
-      border: 'none',
-      borderRadius: '6px',
-      fontSize: '14px',
-      cursor: 'pointer',
-      fontWeight: '500'
-    },
-    buttonDisabled: {
-      opacity: 0.5,
-      cursor: 'not-allowed'
-    },
-    deleteButton: {
-      padding: '8px',
-      backgroundColor: 'transparent',
-      color: '#dc2626',
-      border: 'none',
-      borderRadius: '6px',
-      cursor: 'pointer'
-    }
-  };
 
   return (
-    <div style={styles.section}>
-      <h2 style={styles.title}>Logical Statements</h2>
+    <div className="statements-section">
+      <h2 className="statements-title">Logical Statements</h2>
       <div>
         {statements.map((statement, index) => (
-          <div key={index} style={styles.inputRow}>
+          <div key={index} className="statements-input-row">
             <input
               type="text"
               value={statement}
@@ -97,15 +44,12 @@ const StatementsSection = ({ statements, setStatements }) => {
                 }
               }}
               placeholder="Type: var1 and var2, p --> q, not myVar, etc..."
-              style={styles.input}
+              className="statements-input"
             />
             <button
               onClick={() => removeStatement(index)}
               disabled={statements.length <= 1}
-              style={{
-                ...styles.deleteButton,
-                ...(statements.length <= 1 ? styles.buttonDisabled : {})
-              }}
+              className="statements-delete-button"
             >
               🗑️
             </button>
@@ -113,7 +57,7 @@ const StatementsSection = ({ statements, setStatements }) => {
         ))}
         <button
           onClick={addStatement}
-          style={styles.button}
+          className="statements-button"
         >
           + Add Statement
         </button>

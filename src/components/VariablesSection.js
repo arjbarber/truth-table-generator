@@ -1,5 +1,6 @@
 import React from 'react';
 import { RESERVED_WORDS, MAX_VARIABLES, MAX_VARIABLE_NAME_LENGTH } from '../constants';
+import '../styles/VariablesSection.css';
 
 const VariablesSection = ({ variables, setVariables, error, setError }) => {
   const addVariable = () => {
@@ -47,66 +48,13 @@ const VariablesSection = ({ variables, setVariables, error, setError }) => {
     setVariables(newVars);
   };
 
-  const styles = {
-    section: {
-      backgroundColor: '#dbeafe',
-      padding: '24px',
-      borderRadius: '8px',
-      marginBottom: '24px'
-    },
-    title: {
-      fontSize: '20px',
-      fontWeight: '600',
-      marginBottom: '16px',
-      color: '#374151'
-    },
-    inputRow: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-      marginBottom: '12px'
-    },
-    input: {
-      width: '120px',
-      padding: '8px 12px',
-      border: '1px solid #d1d5db',
-      borderRadius: '6px',
-      fontSize: '14px',
-      outline: 'none'
-    },
-    button: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-      padding: '8px 16px',
-      backgroundColor: '#3b82f6',
-      color: 'white',
-      border: 'none',
-      borderRadius: '6px',
-      fontSize: '14px',
-      cursor: 'pointer',
-      fontWeight: '500'
-    },
-    buttonDisabled: {
-      opacity: 0.5,
-      cursor: 'not-allowed'
-    },
-    deleteButton: {
-      padding: '8px',
-      backgroundColor: 'transparent',
-      color: '#dc2626',
-      border: 'none',
-      borderRadius: '6px',
-      cursor: 'pointer'
-    }
-  };
 
   return (
-    <div style={styles.section}>
-      <h2 style={styles.title}>Boolean Variables</h2>
+    <div className="variables-section">
+      <h2 className="variables-title">Boolean Variables</h2>
       <div>
         {variables.map((variable, index) => (
-          <div key={index} style={styles.inputRow}>
+          <div key={index} className="variables-input-row">
             <input
               type="text"
               value={variable}
@@ -117,17 +65,14 @@ const VariablesSection = ({ variables, setVariables, error, setError }) => {
                   addVariable();
                 }
               }}
-              style={styles.input}
+              className="variables-input"
               maxLength={MAX_VARIABLE_NAME_LENGTH}
               placeholder="variable1"
             />
             <button
               onClick={() => removeVariable(index)}
               disabled={variables.length <= 1}
-              style={{
-                ...styles.deleteButton,
-                ...(variables.length <= 1 ? styles.buttonDisabled : {})
-              }}
+              className="variables-delete-button"
             >
               🗑️
             </button>
@@ -136,10 +81,7 @@ const VariablesSection = ({ variables, setVariables, error, setError }) => {
         <button
           onClick={addVariable}
           disabled={variables.length >= MAX_VARIABLES}
-          style={{
-            ...styles.button,
-            ...(variables.length >= MAX_VARIABLES ? styles.buttonDisabled : {})
-          }}
+          className="variables-button"
         >
           + Add Variable
         </button>

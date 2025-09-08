@@ -1,0 +1,44 @@
+.help-box {
+  font-size: 13px;
+  color: #6b7280;
+  background-color: #f9fafb;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.help-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.help-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.help-code {
+  background-color: white;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: monospace;
+}
+
+.help-warning {
+  color: #dc2626;
+  margin-top: 4px;
+}
+
+.help-example {
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.help-variables {
+  margin-top: 8px;
+}
+
+.help-variables-content {
+  font-size: 12px;
+}
