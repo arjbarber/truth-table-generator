@@ -3,7 +3,12 @@ import { RESERVED_WORDS, MAX_VARIABLES, MAX_VARIABLE_NAME_LENGTH } from '../cons
 
 const VariablesSection = ({ variables, setVariables, error, setError }) => {
   const addVariable = () => {
-    const nextLetter = String.fromCharCode(97 + variables.length);
+    let nextLetter = "";
+    if (97 + variables.length >= 102) {
+      nextLetter = String.fromCharCode(97 + variables.length + 1);
+    } else {
+      nextLetter = String.fromCharCode(97 + variables.length);
+    }
     if (variables.length < MAX_VARIABLES) {
       setVariables([...variables, nextLetter]);
     }
