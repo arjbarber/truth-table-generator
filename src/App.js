@@ -6,6 +6,13 @@ const TruthTableGenerator = () => {
   const [truthTable, setTruthTable] = useState([]);
   const [error, setError] = useState('');
 
+  // Reserved words that cannot be used as variable names
+  const RESERVED_WORDS = new Set([
+    'true', 'false', 't', 'f',
+    'and', 'or', 'not', 'xor', 'implies', 'iff',
+    'if', 'then', 'only'
+  ]);
+
   const addVariable = () => {
     const nextLetter = String.fromCharCode(97 + variables.length);
     if (variables.length < 8) {
@@ -21,8 +28,33 @@ const TruthTableGenerator = () => {
 
   const updateVariable = (index, value) => {
     const newVars = [...variables];
-    // Allow both uppercase and lowercase letters
-    newVars[index] = value.replace(/[^A-Za-z]/g, '').slice(0, 1);
+    // Allow letters, numbers, and underscores, but must start with a letter
+    let cleanValue = value.replace(/[^A-Za-z0-9_]/g, '');
+    if (cleanValue && !/^[A-Za-z]/.test(cleanValue)) {
+      cleanValue = cleanValue.replace(/^[^A-Za-z]*/, '');
+    }
+    // Limit to reasonable length
+    cleanValue = cleanValue.slice(0, 10);
+    
+    // Check if it's a reserved word (case-insensitive)
+    if (cleanValue && RESERVED_WORDS.has(cleanValue.toLowerCase())) {
+      setError(`"${cleanValue}" is a reserved word and cannot be used as a variable name.`);
+      return;
+    }
+    
+    // Check for duplicates
+    if (cleanValue && newVars.some((v, i) => i !== index && v.toLowerCase() === cleanValue.toLowerCase())) {
+      setError(`Variable "${cleanValue}" already exists.`);
+      return;
+    }
+    
+    // Clear error if input is valid
+    if (error && !RESERVED_WORDS.has(cleanValue.toLowerCase()) && 
+        !newVars.some((v, i) => i !== index && v.toLowerCase() === cleanValue.toLowerCase())) {
+      setError('');
+    }
+    
+    newVars[index] = cleanValue;
     setVariables(newVars);
   };
 
@@ -150,125 +182,125 @@ const TruthTableGenerator = () => {
         expr = expr.replace(/↔/g, ' IFF ');
         expr = expr.replace(/⊕/g, ' XOR ');
         
-        // Convert to uppercase for parsing but preserve original case for variable lookup
-        const upperExpr = expr.toUpperCase();
-        
-        while (i < upperExpr.length) {
-          if (upperExpr[i] === ' ') {
+        while (i < expr.length) {
+          if (expr[i] === ' ') {
             i++;
             continue;
           }
           
           // Single character tokens
-          if (upperExpr[i] === '(' || upperExpr[i] === ')') {
-            tokens.push(upperExpr[i]);
+          if (expr[i] === '(' || expr[i] === ')') {
+            tokens.push(expr[i]);
             i++;
             continue;
           }
           
           // Multi-character operators - check in order of length (longest first)
-          if (upperExpr.substr(i, 13) === 'IF AND ONLY IF') {
+          if (expr.substr(i, 13).toUpperCase() === 'IF AND ONLY IF') {
             tokens.push('IFF');
             i += 13;
             continue;
           }
           
-          if (upperExpr.substr(i, 7) === 'IMPLIES') {
+          if (expr.substr(i, 7).toUpperCase() === 'IMPLIES') {
             tokens.push('IMPLIES');
             i += 7;
             continue;
           }
           
-          if (upperExpr.substr(i, 5) === 'FALSE') {
+          if (expr.substr(i, 5).toUpperCase() === 'FALSE') {
             tokens.push('FALSE');
             i += 5;
             continue;
           }
           
-          if (upperExpr.substr(i, 4) === 'TRUE') {
+          if (expr.substr(i, 4).toUpperCase() === 'TRUE') {
             tokens.push('TRUE');
             i += 4;
             continue;
           }
           
-          if (upperExpr.substr(i, 3) === 'XOR') {
+          if (expr.substr(i, 3).toUpperCase() === 'XOR') {
             tokens.push('XOR');
             i += 3;
             continue;
           }
           
-          if (upperExpr.substr(i, 3) === 'AND') {
+          if (expr.substr(i, 3).toUpperCase() === 'AND') {
             tokens.push('AND');
             i += 3;
             continue;
           }
           
-          if (upperExpr.substr(i, 3) === 'NOT') {
+          if (expr.substr(i, 3).toUpperCase() === 'NOT') {
             tokens.push('NOT');
             i += 3;
             continue;
           }
           
-          if (upperExpr.substr(i, 3) === 'IFF') {
+          if (expr.substr(i, 3).toUpperCase() === 'IFF') {
             tokens.push('IFF');
             i += 3;
             continue;
           }
           
-          if (upperExpr.substr(i, 3) === '<->') {
+          if (expr.substr(i, 3) === '<->') {
             tokens.push('IFF');
             i += 3;
             continue;
           }
           
-          if (upperExpr.substr(i, 3) === '-->') {
+          if (expr.substr(i, 3) === '-->') {
             tokens.push('IMPLIES');
             i += 3;
             continue;
           }
           
-          if (upperExpr.substr(i, 2) === 'OR') {
+          if (expr.substr(i, 2).toUpperCase() === 'OR') {
             tokens.push('OR');
             i += 2;
             continue;
           }
           
-          if (upperExpr.substr(i, 2) === '/\\') {
+          if (expr.substr(i, 2) === '/\\') {
             tokens.push('AND');
             i += 2;
             continue;
           }
           
-          if (upperExpr.substr(i, 2) === '\\/') {
+          if (expr.substr(i, 2) === '\\/') {
             tokens.push('OR');
             i += 2;
             continue;
           }
           
           // Single character operators
-          if (upperExpr[i] === '^') {
+          if (expr[i] === '^') {
             tokens.push('XOR');
             i++;
             continue;
           }
           
-          if (upperExpr[i] === '&') {
+          if (expr[i] === '&') {
             tokens.push('AND');
             i++;
             continue;
           }
 
-          if (upperExpr[i] === '|') {
+          if (expr[i] === '|') {
             tokens.push('OR');
             i++;
             continue;
           }
           
-          // Single letter variables (preserve original case)
-          if (/[A-Z]/.test(upperExpr[i])) {
-            // Get the original character from the original expression
-            tokens.push(expr[i]);
-            i++;
+          // Multi-character variables (letters, numbers, underscores)
+          if (/[A-Za-z]/.test(expr[i])) {
+            let varName = '';
+            while (i < expr.length && /[A-Za-z0-9_]/.test(expr[i])) {
+              varName += expr[i];
+              i++;
+            }
+            tokens.push(varName);
             continue;
           }
           
@@ -379,8 +411,8 @@ const TruthTableGenerator = () => {
             return { type: 'literal', value: false };
           }
           
-          // Variable - now supports both uppercase and lowercase
-          if (token && /^[A-Za-z]$/.test(token)) {
+          // Variable - now supports multi-character variables
+          if (token && /^[A-Za-z][A-Za-z0-9_]*$/.test(token)) {
             consume();
             return { type: 'variable', name: token };
           }
@@ -542,7 +574,7 @@ const TruthTableGenerator = () => {
       marginBottom: '12px'
     },
     variableInput: {
-      width: '64px',
+      width: '120px', // Increased width for multi-character variables
       padding: '8px 12px',
       border: '1px solid #d1d5db',
       borderRadius: '6px',
@@ -725,8 +757,8 @@ const TruthTableGenerator = () => {
                       }
                     }
                     style={styles.variableInput}
-                    maxLength="1"
-                    placeholder="a"
+                    maxLength="10"
+                    placeholder="variable1"
                   />
                   <button
                     onClick={() => removeVariable(index)}
@@ -771,7 +803,7 @@ const TruthTableGenerator = () => {
                         }
                       }
                     }
-                    placeholder="Type: a and b, A /\ B, p --> q, not A, etc..."
+                    placeholder="Type: var1 and var2, p --> q, not myVar, etc..."
                     style={styles.statementInput}
                   />
                   <button
@@ -809,13 +841,16 @@ const TruthTableGenerator = () => {
             <div style={{marginTop: '8px'}}>
               <div style={styles.helpTitle}>Variables and Constants:</div>
               <div style={{fontSize: '12px'}}>
-                <div><code style={styles.code}>A, B, p, q</code> → Variables (case-insensitive)</div>
+                <div><code style={styles.code}>var1, myVar, p_1</code> → Multi-character variables (letters, numbers, underscores)</div>
                 <div><code style={styles.code}>true, false</code> → T, F</div>
                 <div><code style={styles.code}>( )</code> - Parentheses for grouping</div>
+                <div style={{color: '#dc2626', marginTop: '4px'}}>
+                  ⚠️ Reserved words (true, false, and, or, not, xor, etc.) cannot be used as variable names
+                </div>
               </div>
             </div>
             <div style={{marginTop: '8px', fontSize: '12px'}}>
-              Try typing: "p and q", "A --> (b or F)", "(x iff T) /\ not Y", "a xor B"
+              Try typing: "var1 and var2", "premise --> conclusion", "(condition iff result) /\ not error"
             </div>
           </div>
         </div>
@@ -837,7 +872,7 @@ const TruthTableGenerator = () => {
                       {statements.map((statement, index) => {
                         if (!statement.trim()) return null; // Don't show column for empty statements
                         const symbolized = convertToSymbols(statement);
-                        const truncated = symbolized.length > 20 ? `${symbolized.slice(0, 20)}...` : symbolized;
+                        const truncated = symbolized.length > 25 ? `${symbolized.slice(0, 25)}...` : symbolized;
                         return (
                           <th key={`stmt-${index}`} style={{...styles.tableCell, ...styles.tableHeaderResult}} title={symbolized}>
                             {truncated}
