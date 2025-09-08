@@ -1,6 +1,5 @@
 import React from 'react';
 import { RESERVED_WORDS, MAX_VARIABLES, MAX_VARIABLE_NAME_LENGTH } from '../constants';
-import '../styles/VariablesSection.css';
 
 const VariablesSection = ({ variables, setVariables, error, setError }) => {
   const addVariable = () => {
@@ -50,11 +49,11 @@ const VariablesSection = ({ variables, setVariables, error, setError }) => {
 
 
   return (
-    <div className="variables-section">
-      <h2 className="variables-title">Boolean Variables</h2>
+    <div className="bg-blue-100 p-6 rounded-lg mb-6">
+      <h2 className="text-xl font-semibold mb-4 text-gray-700">Boolean Variables</h2>
       <div>
         {variables.map((variable, index) => (
-          <div key={index} className="variables-input-row">
+          <div key={index} className="flex items-center gap-2 mb-3">
             <input
               type="text"
               value={variable}
@@ -65,14 +64,14 @@ const VariablesSection = ({ variables, setVariables, error, setError }) => {
                   addVariable();
                 }
               }}
-              className="variables-input"
+              className="w-[120px] px-3 py-2 border border-gray-300 rounded-md text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/10"
               maxLength={MAX_VARIABLE_NAME_LENGTH}
               placeholder="variable1"
             />
             <button
               onClick={() => removeVariable(index)}
               disabled={variables.length <= 1}
-              className="variables-delete-button"
+              className="p-2 bg-transparent text-red-600 border-0 rounded-md cursor-pointer hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               🗑️
             </button>
@@ -81,7 +80,7 @@ const VariablesSection = ({ variables, setVariables, error, setError }) => {
         <button
           onClick={addVariable}
           disabled={variables.length >= MAX_VARIABLES}
-          className="variables-button"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white border-0 rounded-md text-sm cursor-pointer font-medium hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           + Add Variable
         </button>

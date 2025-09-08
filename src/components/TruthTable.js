@@ -1,6 +1,5 @@
 import React from 'react';
 import { convertToSymbols } from '../utils/autoCorrect';
-import '../styles/TruthTable.css';
 
 const TruthTable = ({ truthTable, variables, statements }) => {
 
@@ -9,14 +8,14 @@ const TruthTable = ({ truthTable, variables, statements }) => {
   }
 
   return (
-    <div className="truth-table-container">
-      <h2 className="truth-table-title">Truth Table</h2>
-      <div className="truth-table-wrapper">
-        <table className="truth-table">
+    <div className="bg-gray-50 p-6 rounded-lg">
+      <h2 className="text-xl font-semibold mb-4 text-gray-700">Truth Table</h2>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-sm border border-gray-300">
           <thead>
-            <tr className="truth-table-header">
+            <tr className="bg-gray-200 font-semibold">
               {variables.map((variable, index) => (
-                <th key={`var-${index}`} className="truth-table-cell">
+                <th key={`var-${index}`} className="border border-gray-300 px-3 py-2 text-center">
                   {variable}
                 </th>
               ))}
@@ -27,7 +26,7 @@ const TruthTable = ({ truthTable, variables, statements }) => {
                 return (
                   <th 
                     key={`stmt-${index}`} 
-                    className="truth-table-cell truth-table-header-result" 
+                    className="border border-gray-300 px-3 py-2 text-center bg-amber-100 text-base font-serif" 
                     title={symbolized}
                   >
                     {truncated}
@@ -40,8 +39,8 @@ const TruthTable = ({ truthTable, variables, statements }) => {
             {truthTable.map((row) => (
               <tr key={row.id}>
                 {row.values.map((value, index) => (
-                  <td key={`val-${index}`} className="truth-table-cell">
-                    <span className={`truth-value ${value ? 'truth-true' : 'truth-false'}`}>
+                  <td key={`val-${index}`} className="border border-gray-300 px-3 py-2 text-center">
+                    <span className={`font-mono font-bold ${value ? 'text-green-600' : 'text-red-600'}`}>
                       {value ? 'T' : 'F'}
                     </span>
                   </td>
@@ -51,8 +50,8 @@ const TruthTable = ({ truthTable, variables, statements }) => {
                   if (!statement || !statement.trim()) return null;
                   
                   return (
-                    <td key={`res-${index}`} className="truth-table-result-cell">
-                      <span className={`truth-value ${result === 'Error' ? 'truth-error' : result ? 'truth-true' : 'truth-false'}`}>
+                    <td key={`res-${index}`} className="bg-amber-50 border border-gray-300 px-3 py-2 text-center">
+                      <span className={`font-mono font-bold ${result === 'Error' ? 'text-red-600' : result ? 'text-green-600' : 'text-red-600'}`}>
                         {result === 'Error' ? 'ERR' : result ? 'T' : 'F'}
                       </span>
                     </td>
@@ -64,12 +63,12 @@ const TruthTable = ({ truthTable, variables, statements }) => {
         </table>
       </div>
       
-      <div className="truth-table-stats">
+      <div className="mt-4 text-xs text-gray-500 grid grid-cols-2 gap-4">
         <div>
-          <span className="truth-table-stats-label">Variables:</span> {variables.join(', ')}
+          <span className="font-semibold">Variables:</span> {variables.join(', ')}
         </div>
         <div>
-          <span className="truth-table-stats-label">Rows:</span> {truthTable.length}
+          <span className="font-semibold">Rows:</span> {truthTable.length}
         </div>
       </div>
     </div>

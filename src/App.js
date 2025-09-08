@@ -4,7 +4,6 @@ import StatementsSection from './components/StatementsSection';
 import HelpSection from './components/HelpSection';
 import TruthTable from './components/TruthTable';
 import { evaluateExpression } from './utils/expressionEvaluator';
-import './App.css';
 
 const TruthTableGenerator = () => {
   const [variables, setVariables] = useState(['a', 'b']);
@@ -61,16 +60,17 @@ const TruthTableGenerator = () => {
   }, [generateTruthTable]);
 
   return (
-    <div className="container">
-      <h1 className="title">Truth Table Generator</h1>
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-7xl mx-auto p-6 bg-white font-sans">
+        <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Truth Table Generator</h1>
       
       {error && (
-        <div className="error">
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-md">
           {error}
         </div>
       )}
       
-      <div className="grid">
+      <div className="grid lg:grid-cols-2 gap-8 items-start">
         {/* Input Section */}
         <div>
           <VariablesSection 
@@ -96,6 +96,7 @@ const TruthTableGenerator = () => {
             statements={statements}
           />
         </div>
+      </div>
       </div>
     </div>
   );
