@@ -24,7 +24,7 @@ const HelpSection = () => {
         </div>
       </div>
       <div className="mt-2 text-xs">
-        Try typing: "var1 and var2", "premise --> conclusion", "(condition iff result) /\ not error"
+        Try typing: "var1 and var2", "premise --{'>'} conclusion", "(condition iff result) /\ not error"
       </div>
     </div>
   );
