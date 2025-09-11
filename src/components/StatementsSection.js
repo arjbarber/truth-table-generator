@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { autoCorrectLogicalExpression } from '../utils/autoCorrect';
 
 const StatementsSection = ({ statements, setStatements }) => {
+  const inputRefs = useRef([]);
+
   const addStatement = () => {
-    setStatements([...statements, '']);
+    setStatements((prev) => [...prev, '']);
   };
 
   const removeStatement = (index) => {
@@ -14,17 +16,22 @@ const StatementsSection = ({ statements, setStatements }) => {
     const newStatements = [...statements];
     const currentStatement = statements[index];
     
-    // Only apply auto-correction if the text is getting longer (user is typing, not deleting)
     if (value.length > currentStatement.length) {
       newStatements[index] = autoCorrectLogicalExpression(value);
     } else {
-      // User is deleting, don't auto-correct
       newStatements[index] = value;
     }
     
     setStatements(newStatements);
   };
 
+  useEffect(() => {
+    if (statements.length > 0) {
+      const lastIndex = statements.length - 1;
+      const lastInput = inputRefs.current[lastIndex];
+      if (lastInput) lastInput.focus();
+    }
+  }, [statements.length]);
 
   return (
     <div className="bg-green-100 p-6 rounded-lg mb-6">
@@ -33,6 +40,7 @@ const StatementsSection = ({ statements, setStatements }) => {
         {statements.map((statement, index) => (
           <div key={index} className="flex items-center gap-2 mb-3">
             <input
+              ref={(el) => (inputRefs.current[index] = el)}
               type="text"
               value={statement}
               onChange={(e) => updateStatement(index, e.target.value)}
