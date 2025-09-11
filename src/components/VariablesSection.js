@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { RESERVED_WORDS, MAX_VARIABLES, MAX_VARIABLE_NAME_LENGTH } from '../constants';
 
 const VariablesSection = ({ variables, setVariables, error, setError }) => {
+  const inputRefs = useRef([]);
+
   const addVariable = () => {
     let nextLetter = "";
     if (97 + variables.length >= 102) {
@@ -22,29 +24,25 @@ const VariablesSection = ({ variables, setVariables, error, setError }) => {
 
   const updateVariable = (index, value) => {
     const newVars = [...variables];
-    // Allow letters, numbers, and underscores, but must start with a letter
     let cleanValue = value.replace(/[^A-Za-z0-9_]/g, '');
     if (cleanValue && !/^[A-Za-z]/.test(cleanValue)) {
       cleanValue = cleanValue.replace(/^[^A-Za-z]*/, '');
     }
-    // Limit to reasonable length
     cleanValue = cleanValue.slice(0, MAX_VARIABLE_NAME_LENGTH);
     
-    // Check if it's a reserved word (case-insensitive)
     if (cleanValue && RESERVED_WORDS.has(cleanValue.toLowerCase())) {
       setError(`"${cleanValue}" is a reserved word and cannot be used as a variable name.`);
       return;
     }
-    
-    // Check for duplicates
     if (cleanValue && newVars.some((v, i) => i !== index && v.toLowerCase() === cleanValue.toLowerCase())) {
       setError(`Variable "${cleanValue}" already exists.`);
       return;
     }
-    
-    // Clear error if input is valid
-    if (error && !RESERVED_WORDS.has(cleanValue.toLowerCase()) && 
-        !newVars.some((v, i) => i !== index && v.toLowerCase() === cleanValue.toLowerCase())) {
+    if (
+      error &&
+      !RESERVED_WORDS.has(cleanValue.toLowerCase()) &&
+      !newVars.some((v, i) => i !== index && v.toLowerCase() === cleanValue.toLowerCase())
+    ) {
       setError('');
     }
     
@@ -52,6 +50,13 @@ const VariablesSection = ({ variables, setVariables, error, setError }) => {
     setVariables(newVars);
   };
 
+  useEffect(() => {
+    if (variables.length > 0) {
+      const lastIndex = variables.length - 1;
+      const lastInput = inputRefs.current[lastIndex];
+      if (lastInput) lastInput.focus();
+    }
+  }, [variables.length]);
 
   return (
     <div className="bg-blue-100 p-6 rounded-lg mb-6">
@@ -60,6 +65,7 @@ const VariablesSection = ({ variables, setVariables, error, setError }) => {
         {variables.map((variable, index) => (
           <div key={index} className="flex items-center gap-2 mb-3">
             <input
+              ref={(el) => (inputRefs.current[index] = el)}
               type="text"
               value={variable}
               onChange={(e) => updateVariable(index, e.target.value)}
