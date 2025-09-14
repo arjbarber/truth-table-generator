@@ -59,6 +59,32 @@ const TruthTableGenerator = () => {
     generateTruthTable();
   }, [generateTruthTable]);
 
+  const exportToCSV = () => {
+    let csvContent = "data:text/csv;charset=utf-8,";
+
+    csvContent += "Site: truthtable.andrewbarber.dev\n";
+
+    const headers = [...variables, ...statements];
+    csvContent += headers.join(",") + "\n";
+
+    truthTable.forEach(row => {
+      const rowValues = [
+        ...row.values.map(v => (v ? "T" : "F")),
+        ...row.results.map(r => (r ? "T" : "F"))
+      ];
+      csvContent += rowValues.join(",") + "\n";
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "truth_table.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-7xl mx-auto p-6 bg-white font-sans">
@@ -95,6 +121,11 @@ const TruthTableGenerator = () => {
             variables={variables}
             statements={statements}
           />
+          {/* Export button */}
+          <button
+            onClick={exportToCSV}
+            className="mt-4 w-full px-4 py-2 bg-green-800 text-white rounded-lg shadow hover:bg-gray-900 transition"
+          >Export to CSV</button>
         </div>
       </div>
       </div>
