@@ -120,12 +120,41 @@ const TruthTableGenerator = () => {
             truthTable={truthTable}
             variables={variables}
             statements={statements}
+            onDropdownSelect={({ menu, value }) => {
+              console.log("Selected:", menu, value);
+              if(menu === "download"){
+                switch(value){
+                  case "csv":
+                    exportToCSV();
+                    break;
+                  case "excel":
+                    alert("Excel download coming soon!");
+                    break;
+                  case "pdf":
+                    alert("PDF download coming soon!");
+                    break;
+                  default:
+                    alert("Error. Please Contact Andrew")
+                }
+              } else if (menu === "copy") {
+                switch(value){
+                  case "latex":
+                    alert("Latex copy coming soon!");
+                    break;
+                  case "markdown":
+                    alert("Markdown copy coming soon!");
+                    break;
+                  case "html":
+                    alert("HTML copy coming soon!");
+                    break;
+                  default:
+                    alert("Error. Please Contact Andrew")
+                }
+              } else {
+                alert("Error. Please Contact Andrew")
+              }
+            }}
           />
-          {/* Export button */}
-          <button
-            onClick={exportToCSV}
-            className="mt-4 w-full px-4 py-2 bg-green-800 text-white rounded-lg shadow hover:bg-gray-900 transition"
-          >Export to CSV</button>
         </div>
       </div>
       </div>
