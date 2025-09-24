@@ -367,7 +367,36 @@ const TruthTableGenerator = () => {
   };
 
   const copyAsMarkdown = () => {
-    alert("Markdown copy coming soon!");
+    const headers = [
+      ...variables,
+      "",
+      ...statements
+    ];
+
+    const headerRow = `| ${headers.join(" | ")} |`;
+    const separatorRow = `| ${headers.map(() => "---").join(" | ")} |`;
+
+    const rows = truthTable.map(row => {
+      const rowValues = [
+        ...row.values.map(v => (v ? "T" : "F")),
+        "||",
+        ...row.results.map(r => (r ? "T" : "F"))
+      ];
+      return `| ${rowValues.join(" | ")} |`;
+    });
+
+    const markdown = [
+      headerRow,
+      separatorRow,
+      ...rows
+    ].join("\n");
+
+    navigator.clipboard.writeText(markdown).then(() => {
+      alert("Markdown table copied to clipboard!");
+    }).catch(err => {
+      console.error("Failed to copy Markdown", err);
+      alert("Failed to copy Markdown. Please tell Andrew.");
+    });
   };
 
   const copyAsHTML = () => {
