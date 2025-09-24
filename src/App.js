@@ -505,78 +505,94 @@ const TruthTableGenerator = () => {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-7xl mx-auto p-6 bg-white font-sans">
-        <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Truth Table Generator</h1>
-      
-      {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-md">
-          {error}
-        </div>
-      )}
-      
-      <div className="grid lg:grid-cols-2 gap-8 items-start">
-        {/* Input Section */}
-        <div>
-          <VariablesSection 
-            variables={variables}
-            setVariables={setVariables}
-            error={error}
-            setError={setError}
-          />
+        <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">
+          Truth Table Generator
+        </h1>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-md">
+            {error}
+          </div>
+        )}
+
+        <div className="flex flex-col gap-8 w-full">
           
-          <StatementsSection 
-            statements={statements}
-            setStatements={setStatements}
-          />
-          
-          <HelpSection />
-        </div>
-        
-        {/* Truth Table Section */}
-        <div>
-          <TruthTable 
-            truthTable={truthTable}
-            variables={variables}
-            statements={statements}
-            onDropdownSelect={({ menu, value }) => {
-              console.log("Selected:", menu, value);
-              if(menu === "download"){
-                switch(value){
-                  case "csv":
-                    exportToCSV();
-                    break;
-                  case "excel":
-                    exportToExcel();
-                    break;
-                  case "pdf":
-                    exportToPDF();
-                    break;
-                  default:
-                    alert("Error. Please Contact Andrew")
+          {/* Help Section */}
+          <div className="w-full">
+            <HelpSection />
+          </div>
+
+          {/* Variables and Statements side by side, same height */}
+          <div className="flex flex-col lg:flex-row gap-8 w-full items-stretch">
+            {/* Variables Section */}
+            <div className="w-full lg:w-1/2">
+              <div className="bg-blue-100 p-4 rounded-md h-full flex flex-col">
+                <VariablesSection 
+                  variables={variables}
+                  setVariables={setVariables}
+                  error={error}
+                  setError={setError}
+                />
+              </div>
+            </div>
+
+            {/* Statements Section */}
+            <div className="w-full lg:w-1/2">
+              <div className="bg-green-100 p-4 rounded-md h-full flex flex-col">
+                <StatementsSection 
+                  statements={statements}
+                  setStatements={setStatements}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Truth Table Section */}
+          <div className="w-full">
+            <TruthTable 
+              truthTable={truthTable}
+              variables={variables}
+              statements={statements}
+              onDropdownSelect={({ menu, value }) => {
+                console.log("Selected:", menu, value);
+                if(menu === "download"){
+                  switch(value){
+                    case "csv":
+                      exportToCSV();
+                      break;
+                    case "excel":
+                      exportToExcel();
+                      break;
+                    case "pdf":
+                      exportToPDF();
+                      break;
+                    default:
+                      alert("Error. Please Contact Andrew")
+                  }
+                } else if (menu === "copy") {
+                  switch(value){
+                    case "latex":
+                      copyAsLatex();
+                      break;
+                    case "markdown":
+                      copyAsMarkdown();
+                      break;
+                    case "table":
+                      copyAsRichHTML();
+                      break;
+                    case "html":
+                      copyAsPlainTable();
+                      break;
+                    default:
+                      alert("Error. Please Contact Andrew")
+                  }
+                } else {
+                  alert("Error. Please Contact Andrew")
                 }
-              } else if (menu === "copy") {
-                switch(value){
-                  case "latex":
-                    copyAsLatex();
-                    break;
-                  case "markdown":
-                    copyAsMarkdown();
-                    break;
-                  case "table":
-                    copyAsRichHTML();
-                    break;
-                  case "html":
-                    copyAsPlainTable();
-                    break;
-                  default:
-                    alert("Error. Please Contact Andrew")
-                }
-              } else {
-                alert("Error. Please Contact Andrew")
-              }
-            }}
-          />
+              }}
+            />
+          </div>
         </div>
-      </div>
       </div>
     </div>
   );
