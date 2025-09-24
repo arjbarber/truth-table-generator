@@ -113,7 +113,7 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect }) => 
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" id='truth-table'>
         <table className="w-full border-collapse text-sm border border-gray-300">
           <thead>
             <tr className="bg-gray-200 font-semibold">

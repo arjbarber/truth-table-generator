@@ -8,8 +8,10 @@
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^13.5.0",
     "bootstrap": "^5.3.8",
-    "lucide-react": "^0.542.0",
     "exceljs": "^4.3.0",
+    "jspdf": "^3.0.3",
+    "jspdf-autotable": "^5.0.2",
+    "lucide-react": "^0.542.0",
     "react": "^19.1.1",
     "react-bootstrap": "^2.10.10",
     "react-dom": "^19.1.1",
@@ -44,4 +46,3 @@
     "tailwindcss": "^3.4.17"
   }
 }
-

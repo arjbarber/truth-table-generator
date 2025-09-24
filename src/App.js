@@ -5,6 +5,8 @@ import HelpSection from './components/HelpSection';
 import TruthTable from './components/TruthTable';
 import { evaluateExpression } from './utils/expressionEvaluator';
 import ExcelJS from 'exceljs/dist/exceljs.min.js';
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 const TruthTableGenerator = () => {
   const [variables, setVariables] = useState(['a', 'b']);
@@ -273,12 +275,8 @@ const TruthTableGenerator = () => {
 
         const newRow = sheet.addRow(rowCells);
 
-        // Apply boolean display as TRUE/FALSE (Excel will already show true/false for booleans)
-        // Apply green fill for TRUE cells for both variables and statement result cells
         newRow.eachCell((cell, colNumber) => {
           if (cell.type === ExcelJS.ValueType.Boolean || typeof cell.value === 'boolean' || (typeof cell.value === 'string' && cell.value.startsWith('='))) {
-            // For formula cells, we'll set a conditional fill using a simple check
-            // For boolean literal cells, set fill directly
             if (typeof cell.value === 'boolean') {
               if (cell.value === true) {
                 cell.fill = {
@@ -288,9 +286,6 @@ const TruthTableGenerator = () => {
                 };
               }
             } else if (typeof cell.value === 'string' && cell.value.startsWith('=')) {
-              // Add conditional formatting by adding a style rule — exceljs doesn't fully support conditional formatting in all versions,
-              // but we can set a formula that evaluates to TRUE/FALSE in a helper column or use a limited approach: set the font color to green for now.
-              // We'll set the number format to General and rely on Excel to evaluate the formula when opened.
               cell.numFmt = 'General';
             }
           }
@@ -319,7 +314,48 @@ const TruthTableGenerator = () => {
   };
 
   const exportToPDF = () => {
-    alert("PDF export coming soon!");
+    const table = document.querySelector("#truth-table"); // your table element
+    if (!table) {
+      alert("Truth table not found in DOM!");
+      return;
+    }
+
+    html2canvas(table, { scale: 2 }).then((canvas) => {
+      const imgData = canvas.toDataURL("image/png");
+
+      // Landscape A4 paper
+      const pdf = new jsPDF({
+        orientation: "landscape",
+        unit: "mm",
+        format: "a4"
+      });
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      const margin = 10; // mm
+      const pdfWidth = pageWidth - 2 * margin;
+      const pdfHeight = pageHeight - 2 * margin;
+
+      // Maintain aspect ratio of table
+      const imgProps = pdf.getImageProperties(imgData);
+      const imgWidth = pdfWidth;
+      const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+
+      pdf.addImage(
+        imgData,
+        "PNG",
+        margin,
+        margin,
+        imgWidth,
+        imgHeight > pdfHeight ? pdfHeight : imgHeight
+      );
+
+      pdf.save("truth_table.pdf");
+    }).catch((err) => {
+      console.error("PDF export failed", err);
+      alert("PDF export failed. Please tell Andrew.");
+    });
   };
 
   const copyAsLatex = () => {
