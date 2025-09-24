@@ -14,6 +14,22 @@ const TruthTableGenerator = () => {
   const [truthTable, setTruthTable] = useState([]);
   const [error, setError] = useState('');
 
+  const [alertMessage, setAlertMessage] = useState('');
+  const [showAlert, setShowAlert] = useState(false);
+  const [animate, setAnimate] = useState(false);
+
+  const alert = (text) => {
+    setAlertMessage(text);
+    setShowAlert(true);
+    
+    // small delay so Tailwind sees the transition from opacity-0 → opacity-100
+    setTimeout(() => setAnimate(true), 50);  
+
+    // fade out
+    setTimeout(() => setAnimate(false), 2000);  
+    setTimeout(() => setShowAlert(false), 2500);
+  };
+
   const generateTruthTable = useCallback(() => {
     setError('');
     
@@ -85,6 +101,7 @@ const TruthTableGenerator = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    alert("CSV file downloaded!");
   };
 
   const exportToExcel = () => {
@@ -307,6 +324,7 @@ const TruthTableGenerator = () => {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       });
+      alert("Excel file downloaded!");
     } catch (err) {
       console.error('Excel export failed', err);
       alert('Excel export failed. Please tell Andrew');
@@ -352,6 +370,7 @@ const TruthTableGenerator = () => {
       );
 
       pdf.save("truth_table.pdf");
+      alert("PDF file downloaded!")
     }).catch((err) => {
       console.error("PDF export failed", err);
       alert("PDF export failed. Please tell Andrew.");
@@ -504,6 +523,17 @@ const TruthTableGenerator = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* 🔔 Alert box */}
+      {showAlert && (
+        <div
+          className={`fixed top-4 left-1/2 transform -translate-x-1/2 
+            bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg
+            transition-opacity duration-500 ease-in-out
+            ${animate ? 'opacity-100' : 'opacity-0'}`}
+        >
+          {alertMessage}
+        </div>
+      )}
       <div className="max-w-7xl mx-auto p-6 bg-white font-sans">
         <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">
           Truth Table Generator
