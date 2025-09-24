@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { convertToSymbols } from "../utils/autoCorrect";
+import { Download, Copy } from "lucide-react";
 
 const TruthTable = ({ truthTable, variables, statements, onDropdownSelect }) => {
   const [openMenu, setOpenMenu] = useState(null);
@@ -40,9 +41,9 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect }) => 
               onClick={() =>
                 setOpenMenu(openMenu === "copy" ? null : "copy")
               }
-              className="border border-gray-300 rounded-md px-3 py-1 text-sm bg-white shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-400"
+              className="flex gap-1 border border-gray-300 rounded-md px-3 py-1 text-sm bg-white shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-400"
             >
-              Copy ▾
+              <Copy size={20}/> Copy ▾
             </button>
 
             {openMenu === "copy" && (
@@ -81,9 +82,9 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect }) => 
               onClick={() =>
                 setOpenMenu(openMenu === "download" ? null : "download")
               }
-              className="border border-gray-300 rounded-md px-3 py-1 text-sm bg-white shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-400"
+              className="flex gap-1 border border-gray-300 rounded-md px-3 py-1 text-sm bg-white shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-400"
             >
-              Download ▾
+              <Download size={20}/> Download ▾
             </button>
 
             {openMenu === "download" && (
