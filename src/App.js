@@ -399,8 +399,71 @@ const TruthTableGenerator = () => {
     });
   };
 
-  const copyAsHTML = () => {
-    alert("HTML copy coming soon!");
+  const copyAsPlainTable = () => {
+    try {
+      const plainHeaders = [...variables, ...(statements.length ? ["|"] : []), ...statements];
+      const plainRows = truthTable.map(row => {
+        const vars = row.values.map(v => (v ? "T" : "F"));
+        const res = row.results.map(r => (r ? "T" : "F"));
+        return [...vars, ...(statements.length ? ["|"] : []), ...res].join(" ");
+      });
+      const plainText = [plainHeaders.join(" "), ...plainRows].join("\n");
+
+      navigator.clipboard.writeText(plainText).then(() => {
+        alert("Plain-text table copied to clipboard!");
+      });
+    } catch (err) {
+      console.error("copyAsPlainTable failed", err);
+      alert("Failed to copy plain text. Please tell Andrew.");
+    }
+  };
+
+  // Always copy rich HTML (only works if browser supports text/html in clipboard API)
+  const copyAsRichHTML = () => {
+    try {
+      if (!(navigator.clipboard && navigator.clipboard.write && window.ClipboardItem)) {
+        alert("Your browser does not support rich HTML copy.");
+        return;
+      }
+
+      const headers = [...variables, ...(statements.length ? [""] : []), ...statements];
+
+      const escapeHtml = (s) =>
+        String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+
+      const headerCells = headers.map(h => `<th>${escapeHtml(h)}</th>`).join("");
+
+      const bodyRows = truthTable.map(row => {
+        const varCells = row.values.map(v => `<td>${v ? "T" : "F"}</td>`).join("");
+        const sepCell = statements.length ? `<td></td>` : "";
+        const resultCells = row.results.map(r => `<td>${r ? "T" : "F"}</td>`).join("");
+        return `<tr>${varCells}${sepCell}${resultCells}</tr>`;
+      }).join("\n");
+
+      const tableHtml = `
+  <table>
+    <thead><tr>${headerCells}</tr></thead>
+    <tbody>${bodyRows}</tbody>
+  </table>`;
+
+      const blobHtml = new Blob([tableHtml], { type: "text/html" });
+      const data = [new ClipboardItem({ "text/html": blobHtml })];
+
+      navigator.clipboard.write(data).then(() => {
+        alert("Rich HTML table copied to clipboard!");
+      }).catch(err => {
+        console.error("copyAsRichHTML failed", err);
+        alert("Failed to copy HTML. Please tell Andrew.");
+      });
+    } catch (err) {
+      console.error("copyAsRichHTML failed", err);
+      alert("Failed to copy HTML. Please tell Andrew.");
+    }
   };
 
   return (
@@ -462,8 +525,11 @@ const TruthTableGenerator = () => {
                   case "markdown":
                     copyAsMarkdown();
                     break;
+                  case "table":
+                    copyAsRichHTML();
+                    break;
                   case "html":
-                    copyAsHTML();
+                    copyAsPlainTable();
                     break;
                   default:
                     alert("Error. Please Contact Andrew")

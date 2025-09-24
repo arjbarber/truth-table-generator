@@ -60,10 +60,16 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect }) => 
                   Copy as Markdown
                 </button>
                 <button
+                  onClick={() => handleOptionClick("copy", "table")}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Copy as table (for docs/Word)
+                </button>
+                <button
                   onClick={() => handleOptionClick("copy", "html")}
                   className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                 >
-                  Copy as HTML
+                  Copy as html
                 </button>
               </div>
             )}
