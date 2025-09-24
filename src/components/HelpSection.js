@@ -1,4 +1,5 @@
 import React from 'react';
+import { TriangleAlert } from 'lucide-react';
 
 const HelpSection = () => {
   return (
@@ -18,8 +19,8 @@ const HelpSection = () => {
           <div><code className="bg-white px-1 py-0.5 rounded font-mono">var1, myVar, p_1</code> → Multi-character variables (letters, numbers, underscores)</div>
           <div><code className="bg-white px-1 py-0.5 rounded font-mono">true, false</code> → T, F</div>
           <div><code className="bg-white px-1 py-0.5 rounded font-mono">( )</code> - Parentheses for grouping</div>
-          <div className="text-red-600 mt-1">
-            ⚠️ Reserved words (true, false, and, or, not, xor, etc.) cannot be used as variable names
+          <div className="flex gap-1 text-red-600 mt-1">
+            <TriangleAlert size={15}/> Reserved words (true, false, and, or, not, xor, etc.) cannot be used as variable names
           </div>
         </div>
       </div>

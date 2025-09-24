@@ -1,5 +1,6 @@
 import React from 'react';
 import { autoCorrectLogicalExpression } from '../utils/autoCorrect';
+import { ClipboardPen, Trash2 } from 'lucide-react';
 
 const StatementsSection = ({ statements, setStatements }) => {
   const addStatement = () => {
@@ -28,7 +29,7 @@ const StatementsSection = ({ statements, setStatements }) => {
 
   return (
     <div className="bg-green-100 p-6 rounded-lg mb-6">
-      <h2 className="text-xl font-semibold mb-4 text-gray-700">Logical Statements</h2>
+      <h2 className="flex gap-2 text-xl font-semibold mb-4 text-gray-700">Logical Statements <ClipboardPen size={30}/></h2>
       <div>
         {statements.map((statement, index) => (
           <div key={index} className="flex items-center gap-2 mb-3">
@@ -48,9 +49,9 @@ const StatementsSection = ({ statements, setStatements }) => {
             <button
               onClick={() => removeStatement(index)}
               disabled={statements.length <= 1}
-              className="p-2 bg-transparent text-red-600 border-0 rounded-md cursor-pointer hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 bg-transparent text-gray-400 border-0 rounded-md cursor-pointer hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              🗑️
+              <Trash2 />
             </button>
           </div>
         ))}

@@ -1,5 +1,6 @@
 import React from 'react';
 import { RESERVED_WORDS, MAX_VARIABLES, MAX_VARIABLE_NAME_LENGTH } from '../constants';
+import { Variable, Trash2 } from 'lucide-react';
 
 const VariablesSection = ({ variables, setVariables, error, setError }) => {
   const addVariable = () => {
@@ -55,7 +56,7 @@ const VariablesSection = ({ variables, setVariables, error, setError }) => {
 
   return (
     <div className="bg-blue-100 p-6 rounded-lg mb-6">
-      <h2 className="text-xl font-semibold mb-4 text-gray-700">Boolean Variables</h2>
+      <h2 className="flex gap-2 text-xl font-semibold mb-4 text-gray-700">Boolean Variables <Variable size={30}/></h2>
       <div>
         {variables.map((variable, index) => (
           <div key={index} className="flex items-center gap-2 mb-3">
@@ -76,9 +77,9 @@ const VariablesSection = ({ variables, setVariables, error, setError }) => {
             <button
               onClick={() => removeVariable(index)}
               disabled={variables.length <= 1}
-              className="p-2 bg-transparent text-red-600 border-0 rounded-md cursor-pointer hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 bg-transparent text-gray-400 border-0 rounded-md cursor-pointer hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              🗑️
+              <Trash2 />
             </button>
           </div>
         ))}
