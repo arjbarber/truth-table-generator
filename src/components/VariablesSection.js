@@ -1,6 +1,57 @@
 import React from 'react';
 import { RESERVED_WORDS, MAX_VARIABLES, MAX_VARIABLE_NAME_LENGTH } from '../constants';
-import { Variable, Trash2 } from 'lucide-react';
+import { Variable, Trash2, GripVertical } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+const SortableItem = ({ id, value, index, updateVariable, removeVariable, variablesLength }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    backgroundColor: isDragging ? 'rgba(147,197,253,0.5)' : 'transparent', // highlight while dragging
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="flex items-center gap-2 mb-3 p-1 rounded"
+    >
+      <GripVertical />
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => updateVariable(index, e.target.value)}
+        className="w-[120px] px-3 py-2 border border-gray-300 rounded-md text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/10"
+        maxLength={MAX_VARIABLE_NAME_LENGTH}
+        placeholder="variable1"
+      />
+      <button
+        onClick={() => removeVariable(index)}
+        disabled={variablesLength <= 1}
+        className="p-2 bg-transparent text-gray-400 border-0 rounded-md cursor-pointer hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <Trash2 />
+      </button>
+    </div>
+  );
+};
 
 const VariablesSection = ({ variables, setVariables, error, setError }) => {
   const addVariable = () => {
@@ -23,74 +74,71 @@ const VariablesSection = ({ variables, setVariables, error, setError }) => {
 
   const updateVariable = (index, value) => {
     const newVars = [...variables];
-    // Allow letters, numbers, and underscores, but must start with a letter
     let cleanValue = value.replace(/[^A-Za-z0-9_]/g, '');
     if (cleanValue && !/^[A-Za-z]/.test(cleanValue)) {
       cleanValue = cleanValue.replace(/^[^A-Za-z]*/, '');
     }
-    // Limit to reasonable length
     cleanValue = cleanValue.slice(0, MAX_VARIABLE_NAME_LENGTH);
-    
-    // Check if it's a reserved word (case-insensitive)
+
     if (cleanValue && RESERVED_WORDS.has(cleanValue.toLowerCase())) {
       setError(`"${cleanValue}" is a reserved word and cannot be used as a variable name.`);
       return;
     }
-    
-    // Check for duplicates
+
     if (cleanValue && newVars.some((v, i) => i !== index && v.toLowerCase() === cleanValue.toLowerCase())) {
       setError(`Variable "${cleanValue}" already exists.`);
       return;
     }
-    
-    // Clear error if input is valid
+
     if (error && !RESERVED_WORDS.has(cleanValue.toLowerCase()) && 
         !newVars.some((v, i) => i !== index && v.toLowerCase() === cleanValue.toLowerCase())) {
       setError('');
     }
-    
+
     newVars[index] = cleanValue;
     setVariables(newVars);
   };
 
+  const sensors = useSensors(useSensor(PointerSensor));
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (active.id !== over.id) {
+      const oldIndex = variables.findIndex((v, i) => `var-${i}` === active.id);
+      const newIndex = variables.findIndex((v, i) => `var-${i}` === over.id);
+      setVariables(arrayMove(variables, oldIndex, newIndex));
+    }
+  };
 
   return (
     <div className="bg-blue-100 p-6 rounded-lg mb-6">
-      <h2 className="flex gap-2 text-xl font-semibold mb-4 text-gray-700">Boolean Variables <Variable size={30}/></h2>
-      <div>
-        {variables.map((variable, index) => (
-          <div key={index} className="flex items-center gap-2 mb-3">
-            <input
-              type="text"
+      <h2 className="flex gap-2 text-xl font-semibold mb-4 text-gray-700">
+        Boolean Variables <Variable size={30}/>
+      </h2>
+
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={variables.map((_, i) => `var-${i}`)} strategy={verticalListSortingStrategy}>
+          {variables.map((variable, index) => (
+            <SortableItem
+              key={index}
+              id={`var-${index}`}
               value={variable}
-              onChange={(e) => updateVariable(index, e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  addVariable();
-                }
-              }}
-              className="w-[120px] px-3 py-2 border border-gray-300 rounded-md text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/10"
-              maxLength={MAX_VARIABLE_NAME_LENGTH}
-              placeholder="variable1"
+              index={index}
+              updateVariable={updateVariable}
+              removeVariable={removeVariable}
+              variablesLength={variables.length}
             />
-            <button
-              onClick={() => removeVariable(index)}
-              disabled={variables.length <= 1}
-              className="p-2 bg-transparent text-gray-400 border-0 rounded-md cursor-pointer hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Trash2 />
-            </button>
-          </div>
-        ))}
-        <button
-          onClick={addVariable}
-          disabled={variables.length >= MAX_VARIABLES}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white border-0 rounded-md text-sm cursor-pointer font-medium hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          + Add Variable
-        </button>
-      </div>
+          ))}
+        </SortableContext>
+      </DndContext>
+
+      <button
+        onClick={addVariable}
+        disabled={variables.length >= MAX_VARIABLES}
+        className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white border-0 rounded-md text-sm cursor-pointer font-medium hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        + Add Variable
+      </button>
     </div>
   );
 };
