@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { autoCorrectLogicalExpression } from '../utils/autoCorrect';
 import { ClipboardPen, Trash2, GripVertical } from 'lucide-react';
 import {
@@ -58,8 +58,10 @@ const SortableStatement = ({ id, value, index, updateStatement, removeStatement,
 };
 
 const StatementsSection = ({ statements, setStatements }) => {
+  const inputRefs = useRef([]);
+
   const addStatement = () => {
-    setStatements([...statements, '']);
+    setStatements((prev) => [...prev, '']);
   };
 
   const removeStatement = (index) => {
@@ -71,8 +73,6 @@ const StatementsSection = ({ statements, setStatements }) => {
   const updateStatement = (index, value) => {
     const newStatements = [...statements];
     const currentStatement = statements[index];
-
-    // Only apply auto-correction if typing (not deleting)
     if (value.length > currentStatement.length) {
       newStatements[index] = autoCorrectLogicalExpression(value);
     } else {
@@ -81,31 +81,23 @@ const StatementsSection = ({ statements, setStatements }) => {
 
     setStatements(newStatements);
   };
-
-  const sensors = useSensors(useSensor(PointerSensor));
-
-  const handleDragEnd = (event) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    const oldIndex = statements.findIndex((_, i) => `stmt-${i}` === active.id);
-    const newIndex = statements.findIndex((_, i) => `stmt-${i}` === over.id);
-
-    setStatements(arrayMove(statements, oldIndex, newIndex));
-  };
+  useEffect(() => {
+    if (statements.length > 0) {
+      const lastIndex = statements.length - 1;
+      const lastInput = inputRefs.current[lastIndex];
+      if (lastInput) lastInput.focus();
+    }
+  }, [statements.length]);
 
   return (
     <div className="bg-green-100 p-6 rounded-lg mb-6">
-      <h2 className="flex gap-2 text-xl font-semibold mb-4 text-gray-700">
-        Logical Statements <ClipboardPen size={30} />
-      </h2>
-
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={statements.map((_, i) => `stmt-${i}`)} strategy={verticalListSortingStrategy}>
-          {statements.map((statement, index) => (
-            <SortableStatement
-              key={index}
-              id={`stmt-${index}`}
+      <h2 className="text-xl font-semibold mb-4 text-gray-700">Logical Statements</h2>
+      <div>
+        {statements.map((statement, index) => (
+          <div key={index} className="flex items-center gap-2 mb-3">
+            <input
+              ref={(el) => (inputRefs.current[index] = el)}
+              type="text"
               value={statement}
               index={index}
               updateStatement={updateStatement}
