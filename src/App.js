@@ -323,7 +323,47 @@ const TruthTableGenerator = () => {
   };
 
   const copyAsLatex = () => {
-    alert("LaTeX copy coming soon!");
+    // Build header
+    const headers = [...variables, ...statements];
+
+    // Column format: variables separated by |, then ||, then statements separated by |
+    const colFormat = [
+      variables.map(() => "c").join("|"),
+      statements.length > 0 ? "||" + statements.map(() => "c").join("|") : ""
+    ].join("");
+
+    const headerRow = headers.map(h =>
+      h
+        .replace(/\*/g, "\\land")
+        .replace(/∧/g, "\\land")
+        .replace(/→/g, "\\to")
+        .replace(/↔/g, "\\leftrightarrow")
+        .replace(/∨/g, "\\lor")
+        .replace(/¬/g, "\\lnot")
+        .replace(/⊕/g, "\\oplus")
+    ).join(" & ");
+
+    // Build rows
+    const rows = truthTable.map(row => {
+      const rowValues = [
+        ...row.values.map(v =>
+          v ? "{\\color{green}\\mathrm{T}}" : "{\\color{red}\\mathrm{F}}"
+        ),
+        ...row.results.map(r =>
+          r ? "{\\color{green}\\mathrm{T}}" : "{\\color{red}\\mathrm{F}}"
+        )
+      ];
+      return rowValues.join("&") + "\\\\";
+    });
+
+    const latex = `$$\n\\begin{array}{${colFormat}}\n${headerRow} \\\\ \\hline\n${rows.join("\n")}\n\\end{array}\n$$`;
+
+    navigator.clipboard.writeText(latex).then(() => {
+      alert("LaTeX table copied to clipboard!");
+    }).catch(err => {
+      console.error("Failed to copy LaTeX", err);
+      alert("Failed to copy LaTeX. Please tell Andrew.");
+    });
   };
 
   const copyAsMarkdown = () => {
