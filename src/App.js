@@ -509,19 +509,12 @@ const TruthTableGenerator = () => {
           Truth Table Generator
         </h1>
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-md">
-            {error}
-          </div>
-        )}
-
         <div className="flex flex-col gap-8 w-full">
-          
-          {/* Help Section */}
-          <div className="w-full">
-            <HelpSection />
-          </div>
-
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-md">
+              {error}
+            </div>
+          )}
           {/* Variables and Statements side by side, same height */}
           <div className="flex flex-col lg:flex-row gap-8 w-full items-stretch">
             {/* Variables Section */}
@@ -591,6 +584,10 @@ const TruthTableGenerator = () => {
                 }
               }}
             />
+          </div>
+          {/* Help Section */}
+          <div className="w-full">
+            <HelpSection />
           </div>
         </div>
       </div>
