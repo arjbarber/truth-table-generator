@@ -16,7 +16,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-const SortableStatement = ({ id, value, index, updateStatement, removeStatement, statementsLength }) => {
+const SortableStatement = ({ id, value, index, updateStatement, removeStatement, statementsLength, inputRef, onKeyDown }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
 
   const style = {
@@ -38,11 +38,8 @@ const SortableStatement = ({ id, value, index, updateStatement, removeStatement,
         type="text"
         value={value}
         onChange={(e) => updateStatement(index, e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-          }
-        }}
+        onKeyDown={(e) => onKeyDown ? onKeyDown(e, index) : undefined}
+        ref={inputRef}
         placeholder="Type: var1 and var2, p --> q, not myVar, etc..."
         className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm outline-none font-mono focus:border-green-500 focus:ring-1 focus:ring-green-500/10"
       />
@@ -61,6 +58,31 @@ const SortableStatement = ({ id, value, index, updateStatement, removeStatement,
 const StatementsSection = ({ statements, setStatements }) => {
   const addStatement = () => {
     setStatements([...statements, '']);
+  };
+
+  // Refs for each statement input
+  const inputRefs = React.useRef([]);
+
+  React.useEffect(() => {
+    inputRefs.current = inputRefs.current.slice(0, statements.length);
+  }, [statements.length]);
+
+  const focusNewStatement = (index) => {
+    const ref = inputRefs.current[index];
+    if (ref && ref.focus) ref.focus();
+  };
+
+  const handleInputKeyDown = (e, index) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      // Add a new statement and focus it
+      setStatements(prev => {
+        const next = [...prev, ''];
+        // focus after DOM update
+        setTimeout(() => focusNewStatement(next.length - 1), 50);
+        return next;
+      });
+    }
   };
 
   const removeStatement = (index) => {
@@ -112,6 +134,8 @@ const StatementsSection = ({ statements, setStatements }) => {
               updateStatement={updateStatement}
               removeStatement={removeStatement}
               statementsLength={statements.length}
+              inputRef={el => inputRefs.current[index] = el}
+              onKeyDown={handleInputKeyDown}
             />
           ))}
         </SortableContext>

@@ -16,7 +16,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-const SortableItem = ({ id, value, index, updateVariable, removeVariable, variablesLength }) => {
+const SortableItem = ({ id, value, index, updateVariable, removeVariable, variablesLength, inputRef, onKeyDown }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
 
   const style = {
@@ -38,6 +38,8 @@ const SortableItem = ({ id, value, index, updateVariable, removeVariable, variab
         type="text"
         value={value}
         onChange={(e) => updateVariable(index, e.target.value)}
+        onKeyDown={(e) => onKeyDown && onKeyDown(e, index)}
+        ref={inputRef}
         className="w-[120px] px-3 py-2 border border-gray-300 rounded-md text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/10"
         maxLength={MAX_VARIABLE_NAME_LENGTH}
         placeholder="variable1"
@@ -64,6 +66,42 @@ const VariablesSection = ({ variables, setVariables, error, setError }) => {
     }
     if (variables.length < MAX_VARIABLES) {
       setVariables([...variables, nextLetter]);
+    }
+  };
+
+  // Refs for each input so we can focus the newly added input when pressing Enter
+  const inputRefs = React.useRef([]);
+
+  React.useEffect(() => {
+    // Ensure the refs array matches variables length
+    inputRefs.current = inputRefs.current.slice(0, variables.length);
+  }, [variables.length]);
+
+  const focusNewInput = (index) => {
+    // Focus the input at index if exists
+    const ref = inputRefs.current[index];
+    if (ref && ref.focus) ref.focus();
+  };
+
+  const handleInputKeyDown = (e, index) => {
+    if (e.key === 'Enter') {
+      // Add a new variable and focus it after it's created
+      if (variables.length < MAX_VARIABLES) {
+        // compute next variable name (same logic as addVariable)
+        let nextLetter = "";
+        if (97 + variables.length >= 102) {
+          nextLetter = String.fromCharCode(97 + variables.length + 1);
+        } else {
+          nextLetter = String.fromCharCode(97 + variables.length);
+        }
+        const newVars = [...variables, nextLetter];
+        setVariables(newVars);
+
+        // Focus will happen on next tick after DOM updates
+        setTimeout(() => {
+          focusNewInput(newVars.length - 1);
+        }, 50);
+      }
     }
   };
 
@@ -128,6 +166,8 @@ const VariablesSection = ({ variables, setVariables, error, setError }) => {
               updateVariable={updateVariable}
               removeVariable={removeVariable}
               variablesLength={variables.length}
+              inputRef={el => inputRefs.current[index] = el}
+              onKeyDown={handleInputKeyDown}
             />
           ))}
         </SortableContext>

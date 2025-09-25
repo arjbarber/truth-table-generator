@@ -118,14 +118,19 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect }) => 
         <table className="w-full border-collapse text-sm border border-gray-300">
           <thead>
             <tr className="bg-gray-200 font-semibold">
-              {variables.map((variable, index) => (
-                <th
-                  key={`var-${index}`}
-                  className="border border-gray-300 px-3 py-2 text-center"
-                >
-                  {variable}
-                </th>
-              ))}
+              {variables.map((variable, index) => {
+                const isLastVar = index === variables.length - 1;
+                return (
+                  <th
+                    key={`var-${index}`}
+                    className={`border border-gray-300 px-3 py-2 text-center ${
+                      isLastVar ? "border-r-2 border-r-gray-500" : ""
+                    }`}
+                  >
+                    {variable}
+                  </th>
+                );
+              })}
               {statements
                 .map((statement, index) => {
                   if (!statement.trim()) return null;
@@ -134,10 +139,15 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect }) => 
                     symbolized.length > 25
                       ? `${symbolized.slice(0, 25)}...`
                       : symbolized;
+                  // determine if this is the first visible statement column
                   return (
                     <th
                       key={`stmt-${index}`}
-                      className="border border-gray-300 px-3 py-2 text-center bg-amber-100 text-base font-serif"
+                      className={`border border-gray-300 px-3 py-2 text-center bg-amber-100 text-base font-serif ${
+                        index === statements.findIndex((s) => s && s.trim())
+                          ? "border-l-0"
+                          : ""
+                      }`}
                       title={symbolized}
                     >
                       {truncated}
@@ -148,12 +158,14 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect }) => 
             </tr>
           </thead>
           <tbody>
-            {truthTable.map((row) => (
-              <tr key={row.id}>
+            {truthTable.map((row, rowIndex) => (
+              <tr key={row.id} className="odd:bg-white even:bg-gray-50">
                 {row.values.map((value, index) => (
                   <td
                     key={`val-${index}`}
-                    className="border border-gray-300 px-3 py-2 text-center"
+                    className={`border border-gray-300 px-3 py-2 text-center ${
+                      value ? "bg-green-50" : "bg-red-50"
+                    } ${index === variables.length - 1 ? "border-r-2 border-r-gray-500" : ""}`}
                   >
                     <span
                       className={`font-mono font-bold ${
@@ -172,7 +184,13 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect }) => 
                     return (
                       <td
                         key={`res-${index}`}
-                        className="bg-amber-50 border border-gray-300 px-3 py-2 text-center"
+                        className={`border border-gray-300 px-3 py-2 text-center ${
+                          result === "Error"
+                            ? "bg-amber-50"
+                            : result
+                            ? "bg-green-50"
+                            : "bg-red-50"
+                        } ${index === statements.findIndex((s) => s && s.trim()) ? "border-l-0" : ""}`}
                       >
                         <span
                           className={`font-mono font-bold ${
