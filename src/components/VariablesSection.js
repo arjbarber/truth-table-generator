@@ -29,11 +29,11 @@ const SortableItem = ({ id, value, index, updateVariable, removeVariable, variab
     <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
       className="flex items-center gap-2 mb-3 p-1 rounded"
     >
-      <GripVertical />
+      {/* Attach drag listeners only to the handle */}
+      <GripVertical {...listeners} {...attributes} className="cursor-grab" />
+      
       <input
         type="text"
         value={value}
@@ -42,6 +42,7 @@ const SortableItem = ({ id, value, index, updateVariable, removeVariable, variab
         maxLength={MAX_VARIABLE_NAME_LENGTH}
         placeholder="variable1"
       />
+      
       <button
         onClick={() => removeVariable(index)}
         disabled={variablesLength <= 1}

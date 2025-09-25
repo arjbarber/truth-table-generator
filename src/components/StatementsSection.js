@@ -29,11 +29,11 @@ const SortableStatement = ({ id, value, index, updateStatement, removeStatement,
     <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
       className="flex items-center gap-2 mb-3 p-1 rounded"
     >
-      <GripVertical />
+      {/* Drag handle only */}
+      <GripVertical {...listeners} {...attributes} className="cursor-grab" />
+
       <input
         type="text"
         value={value}
@@ -46,6 +46,7 @@ const SortableStatement = ({ id, value, index, updateStatement, removeStatement,
         placeholder="Type: var1 and var2, p --> q, not myVar, etc..."
         className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm outline-none font-mono focus:border-green-500 focus:ring-1 focus:ring-green-500/10"
       />
+
       <button
         onClick={() => removeStatement(index)}
         disabled={statementsLength <= 1}
