@@ -3,6 +3,7 @@ import VariablesSection from './components/VariablesSection';
 import StatementsSection from './components/StatementsSection';
 import HelpSection from './components/HelpSection';
 import TruthTable from './components/TruthTable';
+import IssueModal from "./components/IssueModal";
 import { evaluateExpression } from './utils/expressionEvaluator';
 import ExcelJS from 'exceljs/dist/exceljs.min.js';
 import html2canvas from "html2canvas";
@@ -13,7 +14,7 @@ const TruthTableGenerator = () => {
   const [statements, setStatements] = useState(['a ∧ b', 'a → b', 'a ↔ b']);
   const [truthTable, setTruthTable] = useState([]);
   const [error, setError] = useState('');
-
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [showAlert, setShowAlert] = useState(false);
   const [animate, setAnimate] = useState(false);
@@ -618,6 +619,21 @@ const TruthTableGenerator = () => {
           {/* Help Section */}
           <div className="w-full">
             <HelpSection />
+          </div>
+          {/* Issue Report Section */}
+          <div className="w-full h-full flex flex-col items-center">
+            {/* Report Issue Button */}
+            <div className="w-full mt-8 text-center">
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="bg-gray-800 text-white px-4 py-2 rounded-md shadow-md hover:bg-gray-700"
+              >
+                Report an Issue
+              </button>
+            </div>
+
+            {/* Modal */}
+            <IssueModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onAlert={alert} />
           </div>
         </div>
       </div>
