@@ -1,7 +1,7 @@
 export async function onRequestPost({ request, env }) {
   try {
     const { title, body } = await request.json();
-    console.log("DEBUG Authorization:", `token ${env.GITHUB_TOKEN.slice(0,6)}...`);
+    
     if (!title) {
       return new Response("Missing issue title", { status: 400 });
     }

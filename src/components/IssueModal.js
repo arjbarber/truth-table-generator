@@ -32,19 +32,23 @@ export default function IssueModal({ isOpen, onClose, onAlert }) {
         const err = await res.text();
         console.error("❌ Failed: " + err);
         onAlert("❌ Error creating issue. Please try again later.");
+        onClose();
       }
     } catch (err) {
       console.error(err);
       onAlert("❌ Error creating issue. Please try again later.");
+      onClose();
     } finally {
       setLoading(false);
+      setBody("");
+      setTitle("");
     }
   };
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
-        <h2 className="text-lg font-semibold mb-4">Report an Issue</h2>
+        <h2 className="text-lg font-semibold mb-4">Feature/Issue Reporting</h2>
 
         <input
           type="text"

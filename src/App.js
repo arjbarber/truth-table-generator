@@ -626,9 +626,9 @@ const TruthTableGenerator = () => {
             <div className="w-full mt-8 text-center">
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="bg-gray-800 text-white px-4 py-2 rounded-md shadow-md hover:bg-gray-700"
+                className="bg-gray-50 text-gray-800 px-4 py-2 rounded-md shadow-md hover:bg-gray-200"
               >
-                Report an Issue
+                Suggest a Feature/Report an Issue
               </button>
             </div>
 
