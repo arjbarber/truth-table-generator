@@ -1,4 +1,5 @@
 export async function onRequestPost({ request, env }) {
+  console.log("DEBUG Authorization:", `token ${env.GITHUB_TOKEN.slice(0,6)}...`);
   try {
     const { title, body } = await request.json();
 
