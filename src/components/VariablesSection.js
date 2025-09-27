@@ -15,6 +15,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers';
 
 const SortableItem = ({ id, value, index, updateVariable, removeVariable, variablesLength, inputRef, onKeyDown }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
@@ -78,16 +79,13 @@ const VariablesSection = ({ variables, setVariables, error, setError }) => {
   }, [variables.length]);
 
   const focusNewInput = (index) => {
-    // Focus the input at index if exists
     const ref = inputRefs.current[index];
     if (ref && ref.focus) ref.focus();
   };
 
   const handleInputKeyDown = (e, index) => {
     if (e.key === 'Enter') {
-      // Add a new variable and focus it after it's created
       if (variables.length < MAX_VARIABLES) {
-        // compute next variable name (same logic as addVariable)
         let nextLetter = "";
         if (97 + variables.length >= 102) {
           nextLetter = String.fromCharCode(97 + variables.length + 1);
@@ -97,7 +95,6 @@ const VariablesSection = ({ variables, setVariables, error, setError }) => {
         const newVars = [...variables, nextLetter];
         setVariables(newVars);
 
-        // Focus will happen on next tick after DOM updates
         setTimeout(() => {
           focusNewInput(newVars.length - 1);
         }, 50);
@@ -155,7 +152,12 @@ const VariablesSection = ({ variables, setVariables, error, setError }) => {
         Boolean Variables <Variable size={30}/>
       </h2>
 
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+        modifiers={[restrictToVerticalAxis, restrictToParentElement]} // ✅ restrict movement
+      >
         <SortableContext items={variables.map((_, i) => `var-${i}`)} strategy={verticalListSortingStrategy}>
           {variables.map((variable, index) => (
             <SortableItem

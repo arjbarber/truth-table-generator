@@ -23,15 +23,11 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 
 // Sortable Row Component
-const SortableRow = ({ row, variables, statements, hiddenRows, hideRow, index }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: row.id });
+const SortableRow = ({ row, variables, filteredStatements, hiddenRows, hideRow }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: row.id });
+
+  if (hiddenRows.includes(row.id)) return null;
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -39,16 +35,13 @@ const SortableRow = ({ row, variables, statements, hiddenRows, hideRow, index })
     opacity: isDragging ? 0.5 : 1,
   };
 
-  if (hiddenRows.includes(row.id)) {
-    return null;
-  }
-
   return (
     <tr
       ref={setNodeRef}
       style={style}
       className="relative group odd:bg-white even:bg-gray-50"
     >
+      {/* Variable columns */}
       {row.values.map((value, cellIndex) => (
         <td
           key={`val-${cellIndex}`}
@@ -67,11 +60,9 @@ const SortableRow = ({ row, variables, statements, hiddenRows, hideRow, index })
               <GripVertical size={16} className="text-gray-600" />
             </div>
           )}
-          
+
           <span
-            className={`font-mono font-bold ${
-              value ? "text-green-600" : "text-red-600"
-            }`}
+            className={`font-mono font-bold ${value ? "text-green-600" : "text-red-600"}`}
           >
             {value ? "T" : "F"}
           </span>
@@ -88,43 +79,35 @@ const SortableRow = ({ row, variables, statements, hiddenRows, hideRow, index })
           )}
         </td>
       ))}
-      {row.results
-        .filter((result, cellIndex) => {
-          const statement = statements[cellIndex];
-          return statement && statement.trim();
-        })
-        .map((result, filteredIndex) => {
-          const originalIndex = statements.findIndex((statement, idx) => {
-            if (!statement || !statement.trim()) return false;
-            const filteredStatements = statements.filter(s => s && s.trim());
-            return filteredStatements[filteredIndex] === statement;
-          });
 
-          return (
-            <td
-              key={`res-${originalIndex}`}
-              className={`border border-gray-300 px-3 py-2 text-center ${
+      {/* Results for filtered statements only */}
+      {filteredStatements.map(({ index: stmtIndex }, filteredIdx) => {
+        const result = row.results[stmtIndex];
+        return (
+          <td
+            key={`res-${stmtIndex}`}
+            className={`border border-gray-300 px-3 py-2 text-center ${
+              result === "Error"
+                ? "bg-amber-50"
+                : result
+                ? "bg-green-50"
+                : "bg-red-50"
+            } ${filteredIdx === 0 ? "border-l-0" : ""}`}
+          >
+            <span
+              className={`font-mono font-bold ${
                 result === "Error"
-                  ? "bg-amber-50"
+                  ? "text-red-600"
                   : result
-                  ? "bg-green-50"
-                  : "bg-red-50"
-              } ${filteredIndex === 0 ? "border-l-0" : ""}`}
+                  ? "text-green-600"
+                  : "text-red-600"
+              }`}
             >
-              <span
-                className={`font-mono font-bold ${
-                  result === "Error"
-                    ? "text-red-600"
-                    : result
-                    ? "text-green-600"
-                    : "text-red-600"
-                }`}
-              >
-                {result === "Error" ? "ERR" : result ? "T" : "F"}
-              </span>
-            </td>
-          );
-        })}
+              {result === "Error" ? "ERR" : result ? "T" : "F"}
+            </span>
+          </td>
+        );
+      })}
     </tr>
   );
 };
@@ -139,15 +122,14 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect, onTru
   const menuRef = useRef(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
+
+  // Filter out empty statements but keep original index mapping
+  const filteredStatements = statements
+    .map((s, i) => ({ text: s.trim(), index: i }))
+    .filter(s => s.text);
 
   // Sync when props change
   useEffect(() => {
@@ -179,28 +161,23 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect, onTru
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
-
     if (active.id !== over?.id) {
       const oldIndex = orderedTruthTable.findIndex((item) => item.id === active.id);
       const newIndex = orderedTruthTable.findIndex((item) => item.id === over.id);
-      
+
       const newOrder = arrayMove(orderedTruthTable, oldIndex, newIndex);
       setOrderedTruthTable(newOrder);
-      
+
       const isBackToOriginal = newOrder.every((row, index) => row.id === truthTable[index].id);
       setHasBeenReordered(!isBackToOriginal);
-      
-      if (onTruthTableReorder) {
-        onTruthTableReorder(newOrder);
-      }
+
+      if (onTruthTableReorder) onTruthTableReorder(newOrder);
     }
   };
 
   const handleOptionClick = (menu, value) => {
     setOpenMenu(null);
-    if (onDropdownSelect) {
-      onDropdownSelect({ menu, value });
-    }
+    if (onDropdownSelect) onDropdownSelect({ menu, value });
   };
 
   const hideRow = (rowId) => setHiddenRows((prev) => [...prev, rowId]);
@@ -225,15 +202,12 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect, onTru
           {hiddenRows.length > 0 && (
             <div className="relative">
               <button
-                onClick={() =>
-                  setOpenMenu(openMenu === "unhide" ? null : "unhide")
-                }
+                onClick={() => setOpenMenu(openMenu === "unhide" ? null : "unhide")}
                 className="flex gap-1 border border-gray-300 rounded-md px-3 py-1 text-sm bg-white shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-400"
               >
-                <EyeOff size={20}/>
+                <EyeOff size={20} />
                 Unhide ▾
               </button>
-
               {openMenu === "unhide" && (
                 <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-md shadow-lg z-10 p-2">
                   <input
@@ -243,13 +217,10 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect, onTru
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full mb-2 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
                   />
-
                   <div className="max-h-48 overflow-y-auto text-sm">
                     {hiddenRows
                       .filter((rowId) =>
-                        rowLabels[rowId]
-                          ?.toLowerCase()
-                          .includes(searchQuery.toLowerCase())
+                        rowLabels[rowId]?.toLowerCase().includes(searchQuery.toLowerCase())
                       )
                       .map((rowId) => (
                         <button
@@ -260,14 +231,10 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect, onTru
                           {rowLabels[rowId]}
                         </button>
                       ))}
-
                     {hiddenRows.length === 0 && (
-                      <div className="text-gray-400 text-sm px-3 py-2">
-                        No hidden rows
-                      </div>
+                      <div className="text-gray-400 text-sm px-3 py-2">No hidden rows</div>
                     )}
                   </div>
-
                   {hiddenRows.length > 0 && (
                     <button
                       onClick={unhideAllRows}
@@ -287,9 +254,8 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect, onTru
               onClick={() => setOpenMenu(openMenu === "copy" ? null : "copy")}
               className="flex gap-1 border border-gray-300 rounded-md px-3 py-1 text-sm bg-white shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-400"
             >
-              <Copy size={20}/> Copy ▾
+              <Copy size={20} /> Copy ▾
             </button>
-
             {openMenu === "copy" && (
               <div className="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-md shadow-lg z-10">
                 <button
@@ -327,21 +293,18 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect, onTru
               className="flex gap-1 border border-gray-300 rounded-md px-3 py-1 text-sm bg-white shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-400"
               title="Reset to original order"
             >
-              <RotateCcw size={20}/> Reset Order
+              <RotateCcw size={20} /> Reset Order
             </button>
           )}
 
           {/* Download menu */}
           <div className="relative">
             <button
-              onClick={() =>
-                setOpenMenu(openMenu === "download" ? null : "download")
-              }
+              onClick={() => setOpenMenu(openMenu === "download" ? null : "download")}
               className="flex gap-1 border border-gray-300 rounded-md px-3 py-1 text-sm bg-white shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-400"
             >
-              <Download size={20}/> Download ▾
+              <Download size={20} /> Download ▾
             </button>
-
             {openMenu === "download" && (
               <div className="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-md shadow-lg z-10">
                 <button
@@ -369,7 +332,7 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect, onTru
       </div>
 
       {/* Table with drag and drop */}
-      <div className="overflow-x-auto relative max-h-[500px] overflow-y-auto" id='truth-table'>
+      <div className="overflow-x-auto relative max-h-[500px] overflow-y-auto" id="truth-table">
         <div className="pl-6">
           <DndContext
             sensors={sensors}
@@ -393,29 +356,22 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect, onTru
                       </th>
                     );
                   })}
-                  {statements
-                    .map((statement, index) => {
-                      if (!statement.trim()) return null;
-                      const symbolized = convertToSymbols(statement);
-                      const truncated =
-                        symbolized.length > 25
-                          ? `${symbolized.slice(0, 25)}...`
-                          : symbolized;
-                      return (
-                        <th
-                          key={`stmt-${index}`}
-                          className={`border border-gray-300 px-3 py-2 text-center bg-amber-100 text-base font-serif ${
-                            index === statements.findIndex((s) => s && s.trim())
-                              ? "border-l-0"
-                              : ""
-                          }`}
-                          title={symbolized}
-                        >
-                          {truncated}
-                        </th>
-                      );
-                    })
-                    .filter(Boolean)}
+                  {filteredStatements.map(({ text, index }, i) => {
+                    const symbolized = convertToSymbols(text);
+                    const truncated =
+                      symbolized.length > 25 ? `${symbolized.slice(0, 25)}...` : symbolized;
+                    return (
+                      <th
+                        key={`stmt-${index}`}
+                        className={`border border-gray-300 px-3 py-2 text-center bg-amber-100 text-base font-serif ${
+                          i === 0 ? "border-l-0" : ""
+                        }`}
+                        title={symbolized}
+                      >
+                        {truncated}
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
               <tbody>
@@ -425,10 +381,9 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect, onTru
                       key={row.id}
                       row={row}
                       variables={variables}
-                      statements={statements}
+                      filteredStatements={filteredStatements}
                       hiddenRows={hiddenRows}
                       hideRow={hideRow}
-                      index={index}
                     />
                   ))}
                 </SortableContext>
@@ -440,8 +395,7 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect, onTru
 
       <div className="mt-4 text-xs text-gray-500 grid grid-cols-2 gap-4">
         <div>
-          <span className="font-semibold">Variables:</span>{" "}
-          {variables.join(", ")}
+          <span className="font-semibold">Variables:</span> {variables.join(", ")}
         </div>
         <div>
           <span className="font-semibold">Rows:</span> {orderedTruthTable.length}
