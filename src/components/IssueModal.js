@@ -89,10 +89,10 @@ export default function IssueModal({ isOpen, onClose, onAlert }) {
             {dropdownOpen && !loading && (
               <div className="absolute right-0 mt-2 w-40 bg-white border rounded-md shadow-lg z-10">
                 <button
-                  onClick={() => handleSubmit("Feature")}
+                  onClick={() => handleSubmit("Issue")}
                   className="block w-full text-left px-4 py-2 hover:bg-gray-100"
                 >
-                  Submit as Feature
+                  Submit as Issue
                 </button>
                 <button
                   onClick={() => handleSubmit("Request")}
