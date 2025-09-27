@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { convertToSymbols } from "../utils/autoCorrect";
-import { Download, Copy, EyeOff, GripVertical } from "lucide-react";
+import { Download, Copy, EyeOff, GripVertical, RotateCcw } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -15,6 +15,10 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
+import {
+  restrictToVerticalAxis,
+  restrictToWindowEdges,
+} from '@dnd-kit/modifiers';
 import {
   useSortable,
 } from '@dnd-kit/sortable';
@@ -133,10 +137,15 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect, onTru
   const [rowLabels, setRowLabels] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
   const [orderedTruthTable, setOrderedTruthTable] = useState(truthTable);
+  const [hasBeenReordered, setHasBeenReordered] = useState(false);
   const menuRef = useRef(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -145,6 +154,7 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect, onTru
   // Update ordered truth table when truthTable prop changes
   useEffect(() => {
     setOrderedTruthTable(truthTable);
+    setHasBeenReordered(false);
   }, [truthTable]);
 
   // Close dropdown if clicking outside
@@ -181,6 +191,10 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect, onTru
       const newOrder = arrayMove(orderedTruthTable, oldIndex, newIndex);
       setOrderedTruthTable(newOrder);
       
+      // Check if the new order matches the original order
+      const isBackToOriginal = newOrder.every((row, index) => row.id === truthTable[index].id);
+      setHasBeenReordered(!isBackToOriginal);
+      
       // Call the callback to notify parent component of the new order
       if (onTruthTableReorder) {
         onTruthTableReorder(newOrder);
@@ -205,6 +219,16 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect, onTru
 
   const unhideAllRows = () => {
     setHiddenRows([]);
+  };
+
+  const resetOrder = () => {
+    setOrderedTruthTable(truthTable);
+    setHasBeenReordered(false);
+    
+    // Call the callback to notify parent component of the reset
+    if (onTruthTableReorder) {
+      onTruthTableReorder(truthTable);
+    }
   };
 
   const visibleRows = orderedTruthTable.filter((row) => !hiddenRows.includes(row.id));
@@ -318,6 +342,17 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect, onTru
             )}
           </div>
 
+          {/* Reset Order button (only if table has been reordered) */}
+          {hasBeenReordered && (
+            <button
+              onClick={resetOrder}
+              className="flex gap-1 border border-gray-300 rounded-md px-3 py-1 text-sm bg-white shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-400"
+              title="Reset to original order"
+            >
+              <RotateCcw size={20}/> Reset Order
+            </button>
+          )}
+
           {/* Download menu */}
           <div className="relative">
             <button
@@ -362,6 +397,7 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect, onTru
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
+            modifiers={[restrictToVerticalAxis, restrictToWindowEdges]}
           >
             <table className="w-full border-collapse text-sm border border-gray-300">
               <thead>
