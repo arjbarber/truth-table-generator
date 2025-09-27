@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
 import { convertToSymbols } from "../utils/autoCorrect";
-import { Download, Copy } from "lucide-react";
+import { Download, Copy, EyeOff } from "lucide-react";
 
 const TruthTable = ({ truthTable, variables, statements, onDropdownSelect }) => {
   const [openMenu, setOpenMenu] = useState(null);
+  const [hiddenRows, setHiddenRows] = useState([]);
+  const [rowLabels, setRowLabels] = useState({});
+  const [searchQuery, setSearchQuery] = useState("");
   const menuRef = useRef(null);
 
   // Close dropdown if clicking outside
@@ -17,6 +20,15 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect }) => 
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Build row labels (T, F, T) for search/unhide menu
+  useEffect(() => {
+    const labels = {};
+    truthTable.forEach((row) => {
+      labels[row.id] = row.values.map((v) => (v ? "T" : "F")).join(", ");
+    });
+    setRowLabels(labels);
+  }, [truthTable]);
+
   if (truthTable.length === 0) {
     return null;
   }
@@ -28,6 +40,18 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect }) => 
     }
   };
 
+  const hideRow = (rowId) => {
+    setHiddenRows((prev) => [...prev, rowId]);
+  };
+
+  const unhideRow = (rowId) => {
+    setHiddenRows((prev) => prev.filter((id) => id !== rowId));
+  };
+
+  const unhideAllRows = () => {
+    setHiddenRows([]);
+  };
+
   return (
     <div className="bg-gray-50 p-6 rounded-lg">
       {/* Header with dropdown menus */}
@@ -35,12 +59,73 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect }) => 
         <h2 className="text-xl font-semibold text-gray-700">Truth Table</h2>
 
         <div className="flex space-x-2" ref={menuRef}>
+          {/* Unhide menu (only if there are hidden rows) */}
+          {hiddenRows.length > 0 && (
+            <div className="relative">
+              <button
+                onClick={() =>
+                  setOpenMenu(openMenu === "unhide" ? null : "unhide")
+                }
+                className="flex gap-1 border border-gray-300 rounded-md px-3 py-1 text-sm bg-white shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-400"
+              >
+                <EyeOff size={20}/>
+                Unhide ▾
+              </button>
+
+              {openMenu === "unhide" && (
+                <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-md shadow-lg z-10 p-2">
+                  {/* Search input */}
+                  <input
+                    type="text"
+                    placeholder="Search hidden rows..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full mb-2 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  />
+
+                  {/* Filtered hidden rows */}
+                  <div className="max-h-48 overflow-y-auto text-sm">
+                    {hiddenRows
+                      .filter((rowId) =>
+                        rowLabels[rowId]
+                          ?.toLowerCase()
+                          .includes(searchQuery.toLowerCase())
+                      )
+                      .map((rowId) => (
+                        <button
+                          key={rowId}
+                          onClick={() => unhideRow(rowId)}
+                          className="block w-full text-left px-3 py-1 rounded hover:bg-gray-100"
+                        >
+                          {rowLabels[rowId]}
+                        </button>
+                      ))}
+
+                    {hiddenRows.length === 0 && (
+                      <div className="text-gray-400 text-sm px-3 py-2">
+                        No hidden rows
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Unhide all */}
+                  {hiddenRows.length > 0 && (
+                    <button
+                      onClick={unhideAllRows}
+                      className="mt-2 w-full bg-gray-100 text-gray-700 rounded px-3 py-1 text-sm hover:bg-gray-200"
+                    >
+                      Unhide All Rows
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Copy menu */}
           <div className="relative">
             <button
-              onClick={() =>
-                setOpenMenu(openMenu === "copy" ? null : "copy")
-              }
+              onClick={() => setOpenMenu(openMenu === "copy" ? null : "copy")}
               className="flex gap-1 border border-gray-300 rounded-md px-3 py-1 text-sm bg-white shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-400"
             >
               <Copy size={20}/> Copy ▾
@@ -139,7 +224,6 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect }) => 
                     symbolized.length > 25
                       ? `${symbolized.slice(0, 25)}...`
                       : symbolized;
-                  // determine if this is the first visible statement column
                   return (
                     <th
                       key={`stmt-${index}`}
@@ -158,57 +242,73 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect }) => 
             </tr>
           </thead>
           <tbody>
-            {truthTable.map((row, rowIndex) => (
-              <tr key={row.id} className="odd:bg-white even:bg-gray-50">
-                {row.values.map((value, index) => (
-                  <td
-                    key={`val-${index}`}
-                    className={`border border-gray-300 px-3 py-2 text-center ${
-                      value ? "bg-green-50" : "bg-red-50"
-                    } ${index === variables.length - 1 ? "border-r-2 border-r-gray-500" : ""}`}
-                  >
-                    <span
-                      className={`font-mono font-bold ${
-                        value ? "text-green-600" : "text-red-600"
-                      }`}
+            {truthTable
+              .filter((row) => !hiddenRows.includes(row.id))
+              .map((row) => (
+                <tr
+                  key={row.id}
+                  className="relative group odd:bg-white even:bg-gray-50"
+                >
+                  {row.values.map((value, index) => (
+                    <td
+                      key={`val-${index}`}
+                      className={`relative border border-gray-300 px-3 py-2 text-center ${
+                        value ? "bg-green-50" : "bg-red-50"
+                      } ${index === variables.length - 1 ? "border-r-2 border-r-gray-500" : ""}`}
                     >
-                      {value ? "T" : "F"}
-                    </span>
-                  </td>
-                ))}
-                {row.results
-                  .map((result, index) => {
-                    const statement = statements[index];
-                    if (!statement || !statement.trim()) return null;
-
-                    return (
-                      <td
-                        key={`res-${index}`}
-                        className={`border border-gray-300 px-3 py-2 text-center ${
-                          result === "Error"
-                            ? "bg-amber-50"
-                            : result
-                            ? "bg-green-50"
-                            : "bg-red-50"
-                        } ${index === statements.findIndex((s) => s && s.trim()) ? "border-l-0" : ""}`}
+                      <span
+                        className={`font-mono font-bold ${
+                          value ? "text-green-600" : "text-red-600"
+                        }`}
                       >
-                        <span
-                          className={`font-mono font-bold ${
-                            result === "Error"
-                              ? "text-red-600"
-                              : result
-                              ? "text-green-600"
-                              : "text-red-600"
-                          }`}
+                        {value ? "T" : "F"}
+                      </span>
+
+                      {/* Eye-off button (hover only, inside first cell, left side) */}
+                      {index === 0 && (
+                        <button
+                          onClick={() => hideRow(row.id)}
+                          className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 bg-gray-200/80 rounded-full p-1 text-gray-600 hover:text-red-600 transition"
+                          title="Hide Row"
                         >
-                          {result === "Error" ? "ERR" : result ? "T" : "F"}
-                        </span>
-                      </td>
-                    );
-                  })
-                  .filter(Boolean)}
-              </tr>
-            ))}
+                          <EyeOff size={14} />
+                        </button>
+                      )}
+                    </td>
+                  ))}
+                  {row.results
+                    .map((result, index) => {
+                      const statement = statements[index];
+                      if (!statement || !statement.trim()) return null;
+
+                      return (
+                        <td
+                          key={`res-${index}`}
+                          className={`border border-gray-300 px-3 py-2 text-center ${
+                            result === "Error"
+                              ? "bg-amber-50"
+                              : result
+                              ? "bg-green-50"
+                              : "bg-red-50"
+                          } ${index === statements.findIndex((s) => s && s.trim()) ? "border-l-0" : ""}`}
+                        >
+                          <span
+                            className={`font-mono font-bold ${
+                              result === "Error"
+                                ? "text-red-600"
+                                : result
+                                ? "text-green-600"
+                                : "text-red-600"
+                            }`}
+                          >
+                            {result === "Error" ? "ERR" : result ? "T" : "F"}
+                          </span>
+                        </td>
+                      );
+                    })
+                    .filter(Boolean)}
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>
