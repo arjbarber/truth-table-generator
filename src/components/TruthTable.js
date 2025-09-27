@@ -14,14 +14,12 @@ import {
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
+  useSortable,
 } from '@dnd-kit/sortable';
 import {
   restrictToVerticalAxis,
-  restrictToWindowEdges,
+  restrictToParentElement,
 } from '@dnd-kit/modifiers';
-import {
-  useSortable,
-} from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
 // Sortable Row Component
@@ -58,7 +56,7 @@ const SortableRow = ({ row, variables, statements, hiddenRows, hideRow, index })
             value ? "bg-green-50" : "bg-red-50"
           } ${cellIndex === variables.length - 1 ? "border-r-2 border-r-gray-500" : ""}`}
         >
-          {/* Drag Handle - only in first cell, positioned outside */}
+          {/* Drag Handle */}
           {cellIndex === 0 && (
             <div
               {...attributes}
@@ -78,7 +76,7 @@ const SortableRow = ({ row, variables, statements, hiddenRows, hideRow, index })
             {value ? "T" : "F"}
           </span>
 
-          {/* Eye-off button (hover only, inside first cell, left side) */}
+          {/* Hide Row Button */}
           {cellIndex === 0 && (
             <button
               onClick={() => hideRow(row.id)}
@@ -151,7 +149,7 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect, onTru
     })
   );
 
-  // Update ordered truth table when truthTable prop changes
+  // Sync when props change
   useEffect(() => {
     setOrderedTruthTable(truthTable);
     setHasBeenReordered(false);
@@ -168,7 +166,7 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect, onTru
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Build row labels (T, F, T) for search/unhide menu
+  // Build row labels for unhide menu
   useEffect(() => {
     const labels = {};
     orderedTruthTable.forEach((row) => {
@@ -177,9 +175,7 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect, onTru
     setRowLabels(labels);
   }, [orderedTruthTable]);
 
-  if (truthTable.length === 0) {
-    return null;
-  }
+  if (truthTable.length === 0) return null;
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
@@ -191,11 +187,9 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect, onTru
       const newOrder = arrayMove(orderedTruthTable, oldIndex, newIndex);
       setOrderedTruthTable(newOrder);
       
-      // Check if the new order matches the original order
       const isBackToOriginal = newOrder.every((row, index) => row.id === truthTable[index].id);
       setHasBeenReordered(!isBackToOriginal);
       
-      // Call the callback to notify parent component of the new order
       if (onTruthTableReorder) {
         onTruthTableReorder(newOrder);
       }
@@ -209,26 +203,13 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect, onTru
     }
   };
 
-  const hideRow = (rowId) => {
-    setHiddenRows((prev) => [...prev, rowId]);
-  };
-
-  const unhideRow = (rowId) => {
-    setHiddenRows((prev) => prev.filter((id) => id !== rowId));
-  };
-
-  const unhideAllRows = () => {
-    setHiddenRows([]);
-  };
-
+  const hideRow = (rowId) => setHiddenRows((prev) => [...prev, rowId]);
+  const unhideRow = (rowId) => setHiddenRows((prev) => prev.filter((id) => id !== rowId));
+  const unhideAllRows = () => setHiddenRows([]);
   const resetOrder = () => {
     setOrderedTruthTable(truthTable);
     setHasBeenReordered(false);
-    
-    // Call the callback to notify parent component of the reset
-    if (onTruthTableReorder) {
-      onTruthTableReorder(truthTable);
-    }
+    if (onTruthTableReorder) onTruthTableReorder(truthTable);
   };
 
   const visibleRows = orderedTruthTable.filter((row) => !hiddenRows.includes(row.id));
@@ -240,7 +221,7 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect, onTru
         <h2 className="text-xl font-semibold text-gray-700">Truth Table</h2>
 
         <div className="flex space-x-2" ref={menuRef}>
-          {/* Unhide menu (only if there are hidden rows) */}
+          {/* Unhide menu */}
           {hiddenRows.length > 0 && (
             <div className="relative">
               <button
@@ -255,7 +236,6 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect, onTru
 
               {openMenu === "unhide" && (
                 <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-md shadow-lg z-10 p-2">
-                  {/* Search input */}
                   <input
                     type="text"
                     placeholder="Search hidden rows..."
@@ -264,7 +244,6 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect, onTru
                     className="w-full mb-2 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
                   />
 
-                  {/* Filtered hidden rows */}
                   <div className="max-h-48 overflow-y-auto text-sm">
                     {hiddenRows
                       .filter((rowId) =>
@@ -289,7 +268,6 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect, onTru
                     )}
                   </div>
 
-                  {/* Unhide all */}
                   {hiddenRows.length > 0 && (
                     <button
                       onClick={unhideAllRows}
@@ -342,7 +320,7 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect, onTru
             )}
           </div>
 
-          {/* Reset Order button (only if table has been reordered) */}
+          {/* Reset Order */}
           {hasBeenReordered && (
             <button
               onClick={resetOrder}
@@ -391,13 +369,13 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect, onTru
       </div>
 
       {/* Table with drag and drop */}
-      <div className="overflow-x-auto relative" id='truth-table'>
+      <div className="overflow-x-auto relative max-h-[500px] overflow-y-auto" id='truth-table'>
         <div className="pl-6">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
-            modifiers={[restrictToVerticalAxis, restrictToWindowEdges]}
+            modifiers={[restrictToVerticalAxis, restrictToParentElement]}
           >
             <table className="w-full border-collapse text-sm border border-gray-300">
               <thead>
