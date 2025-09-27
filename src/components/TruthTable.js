@@ -1,13 +1,151 @@
 import React, { useState, useRef, useEffect } from "react";
 import { convertToSymbols } from "../utils/autoCorrect";
-import { Download, Copy, EyeOff } from "lucide-react";
+import { Download, Copy, EyeOff, GripVertical } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
-const TruthTable = ({ truthTable, variables, statements, onDropdownSelect }) => {
+// Sortable Row Component
+const SortableRow = ({ row, variables, statements, hiddenRows, hideRow, index }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: row.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  if (hiddenRows.includes(row.id)) {
+    return null;
+  }
+
+  return (
+    <tr
+      ref={setNodeRef}
+      style={style}
+      className="relative group odd:bg-white even:bg-gray-50"
+    >
+      {row.values.map((value, cellIndex) => (
+        <td
+          key={`val-${cellIndex}`}
+          className={`relative border border-gray-300 px-3 py-2 text-center ${
+            value ? "bg-green-50" : "bg-red-50"
+          } ${cellIndex === variables.length - 1 ? "border-r-2 border-r-gray-500" : ""}`}
+        >
+          {/* Drag Handle - only in first cell, positioned outside */}
+          {cellIndex === 0 && (
+            <div
+              {...attributes}
+              {...listeners}
+              className="absolute -left-6 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 bg-gray-200/90 rounded p-1 cursor-grab active:cursor-grabbing transition-opacity duration-200 z-20"
+              title="Drag to reorder row"
+            >
+              <GripVertical size={16} className="text-gray-600" />
+            </div>
+          )}
+          
+          <span
+            className={`font-mono font-bold ${
+              value ? "text-green-600" : "text-red-600"
+            }`}
+          >
+            {value ? "T" : "F"}
+          </span>
+
+          {/* Eye-off button (hover only, inside first cell, left side) */}
+          {cellIndex === 0 && (
+            <button
+              onClick={() => hideRow(row.id)}
+              className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 bg-gray-200/80 rounded-full p-1 text-gray-600 hover:text-red-600 transition"
+              title="Hide Row"
+            >
+              <EyeOff size={14} />
+            </button>
+          )}
+        </td>
+      ))}
+      {row.results
+        .filter((result, cellIndex) => {
+          const statement = statements[cellIndex];
+          return statement && statement.trim();
+        })
+        .map((result, filteredIndex) => {
+          const originalIndex = statements.findIndex((statement, idx) => {
+            if (!statement || !statement.trim()) return false;
+            const filteredStatements = statements.filter(s => s && s.trim());
+            return filteredStatements[filteredIndex] === statement;
+          });
+
+          return (
+            <td
+              key={`res-${originalIndex}`}
+              className={`border border-gray-300 px-3 py-2 text-center ${
+                result === "Error"
+                  ? "bg-amber-50"
+                  : result
+                  ? "bg-green-50"
+                  : "bg-red-50"
+              } ${filteredIndex === 0 ? "border-l-0" : ""}`}
+            >
+              <span
+                className={`font-mono font-bold ${
+                  result === "Error"
+                    ? "text-red-600"
+                    : result
+                    ? "text-green-600"
+                    : "text-red-600"
+                }`}
+              >
+                {result === "Error" ? "ERR" : result ? "T" : "F"}
+              </span>
+            </td>
+          );
+        })}
+    </tr>
+  );
+};
+
+const TruthTable = ({ truthTable, variables, statements, onDropdownSelect, onTruthTableReorder }) => {
   const [openMenu, setOpenMenu] = useState(null);
   const [hiddenRows, setHiddenRows] = useState([]);
   const [rowLabels, setRowLabels] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
+  const [orderedTruthTable, setOrderedTruthTable] = useState(truthTable);
   const menuRef = useRef(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Update ordered truth table when truthTable prop changes
+  useEffect(() => {
+    setOrderedTruthTable(truthTable);
+  }, [truthTable]);
 
   // Close dropdown if clicking outside
   useEffect(() => {
@@ -23,15 +161,32 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect }) => 
   // Build row labels (T, F, T) for search/unhide menu
   useEffect(() => {
     const labels = {};
-    truthTable.forEach((row) => {
+    orderedTruthTable.forEach((row) => {
       labels[row.id] = row.values.map((v) => (v ? "T" : "F")).join(", ");
     });
     setRowLabels(labels);
-  }, [truthTable]);
+  }, [orderedTruthTable]);
 
   if (truthTable.length === 0) {
     return null;
   }
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+
+    if (active.id !== over?.id) {
+      const oldIndex = orderedTruthTable.findIndex((item) => item.id === active.id);
+      const newIndex = orderedTruthTable.findIndex((item) => item.id === over.id);
+      
+      const newOrder = arrayMove(orderedTruthTable, oldIndex, newIndex);
+      setOrderedTruthTable(newOrder);
+      
+      // Call the callback to notify parent component of the new order
+      if (onTruthTableReorder) {
+        onTruthTableReorder(newOrder);
+      }
+    }
+  };
 
   const handleOptionClick = (menu, value) => {
     setOpenMenu(null);
@@ -51,6 +206,8 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect }) => 
   const unhideAllRows = () => {
     setHiddenRows([]);
   };
+
+  const visibleRows = orderedTruthTable.filter((row) => !hiddenRows.includes(row.id));
 
   return (
     <div className="bg-gray-50 p-6 rounded-lg">
@@ -198,119 +355,73 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect }) => 
         </div>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto" id='truth-table'>
-        <table className="w-full border-collapse text-sm border border-gray-300">
-          <thead>
-            <tr className="bg-gray-200 font-semibold">
-              {variables.map((variable, index) => {
-                const isLastVar = index === variables.length - 1;
-                return (
-                  <th
-                    key={`var-${index}`}
-                    className={`border border-gray-300 px-3 py-2 text-center ${
-                      isLastVar ? "border-r-2 border-r-gray-500" : ""
-                    }`}
-                  >
-                    {variable}
-                  </th>
-                );
-              })}
-              {statements
-                .map((statement, index) => {
-                  if (!statement.trim()) return null;
-                  const symbolized = convertToSymbols(statement);
-                  const truncated =
-                    symbolized.length > 25
-                      ? `${symbolized.slice(0, 25)}...`
-                      : symbolized;
-                  return (
-                    <th
-                      key={`stmt-${index}`}
-                      className={`border border-gray-300 px-3 py-2 text-center bg-amber-100 text-base font-serif ${
-                        index === statements.findIndex((s) => s && s.trim())
-                          ? "border-l-0"
-                          : ""
-                      }`}
-                      title={symbolized}
-                    >
-                      {truncated}
-                    </th>
-                  );
-                })
-                .filter(Boolean)}
-            </tr>
-          </thead>
-          <tbody>
-            {truthTable
-              .filter((row) => !hiddenRows.includes(row.id))
-              .map((row) => (
-                <tr
-                  key={row.id}
-                  className="relative group odd:bg-white even:bg-gray-50"
-                >
-                  {row.values.map((value, index) => (
-                    <td
-                      key={`val-${index}`}
-                      className={`relative border border-gray-300 px-3 py-2 text-center ${
-                        value ? "bg-green-50" : "bg-red-50"
-                      } ${index === variables.length - 1 ? "border-r-2 border-r-gray-500" : ""}`}
-                    >
-                      <span
-                        className={`font-mono font-bold ${
-                          value ? "text-green-600" : "text-red-600"
+      {/* Table with drag and drop */}
+      <div className="overflow-x-auto relative" id='truth-table'>
+        <div className="pl-6">
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <table className="w-full border-collapse text-sm border border-gray-300">
+              <thead>
+                <tr className="bg-gray-200 font-semibold">
+                  {variables.map((variable, index) => {
+                    const isLastVar = index === variables.length - 1;
+                    return (
+                      <th
+                        key={`var-${index}`}
+                        className={`border border-gray-300 px-3 py-2 text-center ${
+                          isLastVar ? "border-r-2 border-r-gray-500" : ""
                         }`}
                       >
-                        {value ? "T" : "F"}
-                      </span>
-
-                      {/* Eye-off button (hover only, inside first cell, left side) */}
-                      {index === 0 && (
-                        <button
-                          onClick={() => hideRow(row.id)}
-                          className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 bg-gray-200/80 rounded-full p-1 text-gray-600 hover:text-red-600 transition"
-                          title="Hide Row"
-                        >
-                          <EyeOff size={14} />
-                        </button>
-                      )}
-                    </td>
-                  ))}
-                  {row.results
-                    .map((result, index) => {
-                      const statement = statements[index];
-                      if (!statement || !statement.trim()) return null;
-
+                        {variable}
+                      </th>
+                    );
+                  })}
+                  {statements
+                    .map((statement, index) => {
+                      if (!statement.trim()) return null;
+                      const symbolized = convertToSymbols(statement);
+                      const truncated =
+                        symbolized.length > 25
+                          ? `${symbolized.slice(0, 25)}...`
+                          : symbolized;
                       return (
-                        <td
-                          key={`res-${index}`}
-                          className={`border border-gray-300 px-3 py-2 text-center ${
-                            result === "Error"
-                              ? "bg-amber-50"
-                              : result
-                              ? "bg-green-50"
-                              : "bg-red-50"
-                          } ${index === statements.findIndex((s) => s && s.trim()) ? "border-l-0" : ""}`}
+                        <th
+                          key={`stmt-${index}`}
+                          className={`border border-gray-300 px-3 py-2 text-center bg-amber-100 text-base font-serif ${
+                            index === statements.findIndex((s) => s && s.trim())
+                              ? "border-l-0"
+                              : ""
+                          }`}
+                          title={symbolized}
                         >
-                          <span
-                            className={`font-mono font-bold ${
-                              result === "Error"
-                                ? "text-red-600"
-                                : result
-                                ? "text-green-600"
-                                : "text-red-600"
-                            }`}
-                          >
-                            {result === "Error" ? "ERR" : result ? "T" : "F"}
-                          </span>
-                        </td>
+                          {truncated}
+                        </th>
                       );
                     })
                     .filter(Boolean)}
                 </tr>
-              ))}
-          </tbody>
-        </table>
+              </thead>
+              <tbody>
+                <SortableContext items={visibleRows} strategy={verticalListSortingStrategy}>
+                  {visibleRows.map((row, index) => (
+                    <SortableRow
+                      key={row.id}
+                      row={row}
+                      variables={variables}
+                      statements={statements}
+                      hiddenRows={hiddenRows}
+                      hideRow={hideRow}
+                      index={index}
+                    />
+                  ))}
+                </SortableContext>
+              </tbody>
+            </table>
+          </DndContext>
+        </div>
       </div>
 
       <div className="mt-4 text-xs text-gray-500 grid grid-cols-2 gap-4">
@@ -319,7 +430,7 @@ const TruthTable = ({ truthTable, variables, statements, onDropdownSelect }) => 
           {variables.join(", ")}
         </div>
         <div>
-          <span className="font-semibold">Rows:</span> {truthTable.length}
+          <span className="font-semibold">Rows:</span> {orderedTruthTable.length}
         </div>
       </div>
     </div>
