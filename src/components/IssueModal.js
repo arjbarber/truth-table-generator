@@ -25,8 +25,6 @@ export default function IssueModal({ isOpen, onClose, onAlert }) {
 
       if (res.ok) {
         onAlert("✅ Issue created on GitHub!");
-        setTitle("");
-        setBody("");
         onClose();
       } else {
         const err = await res.text();
@@ -63,7 +61,7 @@ export default function IssueModal({ isOpen, onClose, onAlert }) {
           value={body}
           onChange={(e) => setBody(e.target.value)}
           rows={4}
-          className="w-full p-2 mb-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full p-2 mb-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
         />
 
         <div className="flex justify-end space-x-3">

@@ -8,6 +8,7 @@ import { evaluateExpression } from './utils/expressionEvaluator';
 import ExcelJS from 'exceljs/dist/exceljs.min.js';
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { Lightbulb } from "lucide-react";
 
 const TruthTableGenerator = () => {
   const [variables, setVariables] = useState(['a', 'b']);
@@ -623,11 +624,12 @@ const TruthTableGenerator = () => {
           {/* Issue Report Section */}
           <div className="w-full h-full flex flex-col items-center">
             {/* Report Issue Button */}
-            <div className="w-full mt-8 text-center">
+            <div className="w-full border-t border-gray-200 text-center">
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="bg-gray-50 text-gray-800 px-4 py-2 rounded-md shadow-md hover:bg-gray-200"
+                className="mt-4 inline-flex items-center gap-2 bg-blue-600 text-white font-medium py-2.5 px-5 rounded-xl shadow-md hover:bg-blue-700 hover:shadow-lg active:scale-95 transition-all duration-200"
               >
+                <Lightbulb size={18} />
                 Suggest a Feature/Report an Issue
               </button>
             </div>
