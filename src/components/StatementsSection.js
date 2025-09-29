@@ -15,6 +15,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers'; // ✅ added
 
 const SortableStatement = ({ id, value, index, updateStatement, removeStatement, statementsLength, inputRef, onKeyDown }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
@@ -78,7 +79,6 @@ const StatementsSection = ({ statements, setStatements }) => {
       // Add a new statement and focus it
       setStatements(prev => {
         const next = [...prev, ''];
-        // focus after DOM update
         setTimeout(() => focusNewStatement(next.length - 1), 50);
         return next;
       });
@@ -123,7 +123,12 @@ const StatementsSection = ({ statements, setStatements }) => {
         Logical Statements <ClipboardPen size={30} />
       </h2>
 
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+        modifiers={[restrictToVerticalAxis, restrictToParentElement]} // ✅ restrict movement
+      >
         <SortableContext items={statements.map((_, i) => `stmt-${i}`)} strategy={verticalListSortingStrategy}>
           {statements.map((statement, index) => (
             <SortableStatement
