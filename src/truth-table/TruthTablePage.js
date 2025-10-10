@@ -9,6 +9,7 @@ import ExcelJS from 'exceljs/dist/exceljs.min.js';
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { Lightbulb } from "lucide-react";
+import NavBar from '../NavBar';
 
 const TruthTablePage = () => {
   const [variables, setVariables] = useState(['a', 'b']);
@@ -524,7 +525,8 @@ const TruthTablePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-white">
+      <NavBar />
       {/* 🔔 Alert box */}
       {showAlert && (
         <div
