@@ -9,8 +9,8 @@ const NavBar = () => {
           to="/"
           className="text-2xl font-extrabold tracking-tight hover:text-gray-300 transition-colors duration-200"
         >
-          <span className="text-blue-400">&lt;</span>
-          COMP 283<span className="text-blue-400">/&gt;</span>
+          <span className="text-blue-400">{'<'}</span>
+          COMP 283<span className="text-blue-400">/{'>'}</span>
         </Link>
 
         {/* Right side: Nav links */}
@@ -27,6 +27,17 @@ const NavBar = () => {
           >
             Truth Table Generator
           </Link>
+          <Link
+            to="/math-keyboard"
+            className="text-lg font-medium hover:text-blue-400 transition-colors duration-200"
+          >
+            Math Keyboard
+          </Link>
+          <a href="https:github.com/arjbarber/truth-table-generator" target="_blank" rel="noopener noreferrer"
+            className="text-lg font-medium hover:text-blue-400 transition-colors duration-200"
+          >
+            GitHub
+          </a>
         </div>
       </div>
     </nav>
