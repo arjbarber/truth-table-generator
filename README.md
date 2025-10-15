@@ -1,70 +1,72 @@
-# Getting Started with Create React App
+# COMP 283 Logic Toolkit
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+An open-source collection of interactive logic tools created for COMP 283. The project bundles a truth table generator, a LaTeX-ready math keyboard, and a draggable set visualizer into one polished web app that you can run locally or deploy to the web.
 
-## Available Scripts
+## Tools at a Glance
 
-In the project directory, you can run:
+### Truth Table Generator
+- Compose expressions with friendly shortcuts that auto-convert to logical symbols (→, ∧, ¬, ⊕, ↔, …).
+- Drag variables, statements, and table rows to reorder them; hide/show rows to focus on specific cases.
+- Copy the table as LaTeX, Markdown, HTML, or doc-friendly text, and export to CSV, Excel, or PDF.
+- Built-in validation guards against duplicate/reserved variable names and empty statements.
 
-### `npm start`
+### Math Keyboard
+- Powered by `mathlive` for rich input with full keyboard support and a custom logic keypad.
+- Generates live LaTeX with one-click copy presets (plain, Perusall/Canvas `\(...\)`, and Gradescope/Campuswire `$$...$$`).
+- Ideal for drafting logic expressions to paste into homework portals or documentation.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### Set Visualizer
+- Interactive playgrounds for membership, union, intersection, complements, Cartesian products, and more.
+- Drag elements inside Venn-style diagrams to watch explanations update in real time.
+- Filter operations by topic (Foundations, Relationships, Operations, Advanced) to focus on a specific concept.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Tech Stack
+- React 19 with `react-router-dom` for routing between tools.
+- Tailwind CSS for styling, combined with `lucide-react` icons.
+- `@dnd-kit` powers drag-and-drop interactions across tables and diagrams.
+- `exceljs`, `jspdf`, and `html2canvas` handle file exports.
+- Cloudflare Pages Functions (`functions/api`) integrate with GitHub for in-app issue reporting.
 
-### `npm test`
+## Getting Started
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Start the development server (defaults to http://localhost:3000):
+   ```bash
+   npm start
+   ```
+3. Run the production build:
+   ```bash
+   npm run build
+   ```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Node 18+ is recommended to match React 19 and recent tooling.
 
-### `npm run build`
+## Enabling GitHub Issue Reporting
+The truth table page includes a “Feature/Issue Reporting” modal that sends issues directly to GitHub using a Cloudflare Pages Function at `functions/api/create-issue.js`. To enable it in your deployment, configure the following environment variables in your Cloudflare project (or equivalent serverless environment):
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- `GITHUB_OWNER`
+- `GITHUB_REPO`
+- `GITHUB_TOKEN` (classic token with `repo` scope)
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Without these variables the modal should be hidden or the requests will fail gracefully.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Project Structure
+```
+src/
+  App.js                # Routes between tools
+  NavBar.js             # Shared navigation
+  home/                 # Landing page + tool/contributor cards
+  truth-table/          # Generator logic, DnD table, exports, helpers
+  math-keyboard/        # Mathlive keyboard, LaTeX output, copy helpers
+  set-visualizer/       # Interactive set operation playgrounds
+functions/
+  api/create-issue.js   # Cloudflare Pages Function for GitHub issue creation
+```
 
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## Contributing
+- File an issue or feature request directly from the app (or via GitHub once the function is wired up).
+- For local changes, branch from `main`, make your updates, and open a pull request.
+- Please include screenshots or screen captures when changing UI-heavy components.
+- Provide a website and LinkedIn so I can add you to the list of contributors on the home page!
