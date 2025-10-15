@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 const COPY_OPTIONS = [
   {
-    label: 'Copy Plain Latex',
+    label: 'Copy Plain LaTeX',
     format: (value) => value,
   },
   {
