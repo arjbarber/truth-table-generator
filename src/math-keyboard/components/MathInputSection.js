@@ -7,7 +7,7 @@ const MathInputSection = ({ mathfieldRef }) => (
     <div className="rounded-lg border border-blue-200 bg-white p-4">
       <math-field
         ref={mathfieldRef}
-        class="block w-full text-2xl leading-relaxed focus:outline-none [&_.ML__canvas]:min-h-[4rem]"
+        className="block w-full text-2xl leading-relaxed focus:outline-none [&_.ML__canvas]:min-h-[4rem]"
         smart-fence="true"
         virtual-keyboard-mode="manual"
       />
