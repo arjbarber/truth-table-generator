@@ -3,7 +3,7 @@ import VariablesSection from './components/VariablesSection';
 import StatementsSection from './components/StatementsSection';
 import HelpSection from './components/HelpSection';
 import TruthTable from './components/TruthTable';
-import IssueModal from "./components/IssueModal";
+import IssueModal from "../components/IssueModal";
 import { evaluateExpression } from './utils/expressionEvaluator';
 import ExcelJS from 'exceljs/dist/exceljs.min.js';
 import html2canvas from "html2canvas";
@@ -637,7 +637,7 @@ const TruthTablePage = () => {
             </div>
 
             {/* Modal */}
-            <IssueModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onAlert={alert} />
+            <IssueModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onAlert={alert} pageName="Truth Table" />
           </div>
         </div>
       </div>

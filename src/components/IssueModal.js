@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-export default function IssueModal({ isOpen, onClose, onAlert }) {
+export default function IssueModal({ isOpen, onClose, onAlert, pageName = "" }) {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [loading, setLoading] = useState(false);
@@ -15,7 +15,9 @@ export default function IssueModal({ isOpen, onClose, onAlert }) {
       return;
     }
 
-    const fullTitle = `[${category}] ${title}`;
+    // Build title with page name if provided
+    const pagePrefix = pageName ? `[${pageName}] ` : "";
+    const fullTitle = `${pagePrefix}[${category}] ${title}`;
 
     setLoading(true);
     try {
