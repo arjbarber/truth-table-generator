@@ -84,7 +84,7 @@ const TruthTablePage = () => {
   const exportToCSV = () => {
     let csvContent = "data:text/csv;charset=utf-8,";
 
-    csvContent += "Site: truthtable.andrewbarber.dev\n";
+    csvContent += `Site: ${window.location.origin}${window.location.pathname}\n`;
 
     const headers = [...variables, ...statements];
     csvContent += headers.join(",") + "\n";
