@@ -27,7 +27,7 @@ const NavBar = () => {
           >
             Math Keyboard
           </Link>
-          <a href="https:github.com/arjbarber/truth-table-generator" target="_blank" rel="noopener noreferrer"
+          <a href="https://github.com/arjbarber/truth-table-generator" target="_blank" rel="noopener noreferrer"
             className="text-lg font-medium hover:text-blue-400 transition-colors duration-200"
           >
             GitHub
