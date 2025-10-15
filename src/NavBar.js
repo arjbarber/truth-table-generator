@@ -16,12 +16,6 @@ const NavBar = () => {
         {/* Right side: Nav links */}
         <div className="space-x-6">
           <Link
-            to="/"
-            className="text-lg font-medium hover:text-blue-400 transition-colors duration-200"
-          >
-            Home
-          </Link>
-          <Link
             to="/truth-table"
             className="text-lg font-medium hover:text-blue-400 transition-colors duration-200"
           >
