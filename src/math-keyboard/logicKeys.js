@@ -13,7 +13,7 @@ export const LOGIC_KEYS = [
     { label: '∀', latex: '\\forall ' },
     { label: '∃', latex: '\\exists ' },
     { label: '∈', latex: '\\in ' },
-    { label: '∉', latex: '\\notin' },
+    { label: '∉', latex: '\\notin ' },
   ],
   [
     { label: 'A', latex: 'A' },
