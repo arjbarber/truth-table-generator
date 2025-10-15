@@ -13,4 +13,11 @@ export const TOOLS = [
     badge: "Formatter",
     external: false,
   },
+  {
+    title: "Set Visualizer",
+    to: "/set-visualizer",
+    description: "View Venn-style diagrams for common set operations and compare relationships quickly.",
+    badge: "Visualizer",
+    external: false,
+  },
 ];
