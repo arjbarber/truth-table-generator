@@ -1,5 +1,5 @@
 import React from 'react';
-import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import TruthTablePage from './truth-table/TruthTablePage';
 import HomePage from './home/HomePage';
 import MathKeyboardPage from './math-keyboard/MathKeyboardPage';
